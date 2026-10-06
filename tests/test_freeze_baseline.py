@@ -34,6 +34,6 @@ def test_manifest_has_required_keys_and_contains_no_absolute_workspace_path():
         "recorded_metric_sha256",
         "dataset", "kb", "classifier_implementation", "class_weights", "thresholds",
         "reproduced_retrieval_backend", "generator_default", "recorded_historical_metrics",
-        "reproduced_metrics", "pytest", "reproduction_commands",
+        "reproduced_metrics", "pytest", "command_exit_status", "reproduction_commands",
     } <= manifest.keys()
     assert str(ROOT) not in encoded

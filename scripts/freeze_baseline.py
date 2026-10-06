@@ -42,6 +42,7 @@ RELEVANT_PACKAGES = (
     "extra-streamlit-components",
     "numpy",
     "pandas",
+    "pip",
     "pytest",
     "requests",
     "scikit-learn",
@@ -114,7 +115,12 @@ def git_value(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
 
 
-def create_manifest(root: Path, pytest_result: dict[str, int], generated_at: str | None = None) -> dict:
+def create_manifest(
+    root: Path,
+    pytest_result: dict[str, int],
+    generated_at: str | None = None,
+    command_exit_status: dict[str, int] | None = None,
+) -> dict:
     kb_files = sorted((root / "kb").glob("*.md"), key=lambda path: path.name)
     kb_hashes = file_hashes(root, kb_files)
     kb_digest = hashlib.sha256()
@@ -174,7 +180,12 @@ def create_manifest(root: Path, pytest_result: dict[str, int], generated_at: str
         "python_version": platform.python_version(),
         "dependency_versions": packages,
         "dependency_file_sha256": requirement_hashes,
-        "random_seeds": {"training_split": 42, "synthetic_data_generator": 42, "retrieval_evaluation": None},
+        "random_seeds": {
+            "classifier": 42,
+            "training_split": 42,
+            "synthetic_data_generator": 42,
+            "retrieval_evaluation": None,
+        },
         "input_file_sha256": input_hashes,
         "recorded_metric_sha256": read_optional_hashes(root, list(HISTORICAL_METRICS.values())),
         "dataset": dataset_summary(root),
@@ -184,13 +195,15 @@ def create_manifest(root: Path, pytest_result: dict[str, int], generated_at: str
         "thresholds": thresholds,
         "reproduced_retrieval_backend": retrieval_backend,
         "generator_default": {
-            "enabled_by_default": os.getenv("USE_OLLAMA", "0").lower() in {"1", "true", "yes"},
+            "ollama_enabled_for_run": os.getenv("USE_OLLAMA", "0").lower() in {"1", "true", "yes"},
+            "enabled_by_default": False,
             "ollama_model_default": os.getenv("OLLAMA_MODEL", "qwen3:4b"),
             "mode": "validated Ollama claims when enabled; extractive fallback otherwise",
         },
         "recorded_historical_metrics": HISTORICAL_METRICS,
         "reproduced_metrics": REPRODUCED_METRICS,
         "pytest": pytest_result,
+        "command_exit_status": command_exit_status or {},
         "reproduction_commands": [
             ".\\.venv\\Scripts\\python.exe -m pip check",
             ".\\.venv\\Scripts\\python.exe scripts\\train_classifier.py",
@@ -205,10 +218,22 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pytest-junit", required=True, type=Path,
                         help="JUnit XML written by the full pytest run; its path is not stored in the manifest.")
+    parser.add_argument("--pip-check-exit", required=True, type=int)
+    parser.add_argument("--training-exit", required=True, type=int)
+    parser.add_argument("--retrieval-exit", required=True, type=int)
     parser.add_argument("--output", default=str(MANIFEST_PATH), type=Path)
     args = parser.parse_args()
     result = read_junit_summary(args.pytest_junit)
-    manifest = create_manifest(ROOT, result)
+    manifest = create_manifest(
+        ROOT,
+        result,
+        command_exit_status={
+            "pip_check": args.pip_check_exit,
+            "training": args.training_exit,
+            "retrieval_evaluation": args.retrieval_exit,
+            "pytest": 0 if result["failed"] == 0 and result["errors"] == 0 else 1,
+        },
+    )
     output = (ROOT / args.output).resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
