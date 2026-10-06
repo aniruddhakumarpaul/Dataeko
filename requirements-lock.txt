@@ -1,14 +1,15 @@
-# Tested lightweight development environment: Python 3.12 on Windows.
-# Includes runtime dependencies and pytest; excludes optional embeddings/Ollama.
-# Regenerate deliberately after upgrading and verifying the environment.
+# Tested Python 3.12 development environment, including local demo SMTP and pytest.
+aiosmtpd==1.4.6
 altair==6.3.0
 anyio==4.15.1
+atpublic==8.0.1
 attrs==26.1.0
 certifi==2026.7.22
 charset-normalizer==3.5.2
 click==8.5.0
 cloudpickle==3.1.2
 colorama==0.4.6
+extra-streamlit-components==0.1.81
 h11==0.16.0
 httptools==0.8.0
 idna==3.20

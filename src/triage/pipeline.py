@@ -6,6 +6,7 @@ from .classifier import classify_ticket, load_classifier
 from .generation import generate_grounded_response
 from .kb import load_kb
 from .retrieval import HybridRetriever
+from .review import review_decision
 from .schemas import TriageResult
 
 
@@ -20,4 +21,9 @@ class TriagePipeline:
         classification = classify_ticket(self.classifier, ticket_text)
         hits = self.retriever.search(ticket_text, k=top_k)
         draft = generate_grounded_response(ticket_text, hits)
-        return TriageResult(classification=classification, retrieval=hits, draft=draft)
+        result = TriageResult(classification=classification, retrieval=hits, draft=draft)
+        review = review_decision(result)
+        if review.required:
+            classification.needs_human_review = True
+            classification.review_reason = review.reason
+        return result

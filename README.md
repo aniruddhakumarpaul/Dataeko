@@ -12,6 +12,10 @@ A zero-cost support triage system that combines **imbalanced multi-class ticket 
 4. Drafts a response only from retrieved evidence and cites source IDs inline.
 5. Abstains when retrieval is weak instead of fabricating an answer.
 
+The main screen focuses on the customer message, category, confidence, review action,
+and suggested reply. Help articles and technical details are optional expandable
+panels. See [`docs/ui.md`](docs/ui.md) for the user flow and exceptional states.
+
 ## Why this design
 
 The task has ~500 noisy, heavily imbalanced examples. A large fine-tuned model is not automatically the best engineering choice. The classifier therefore starts from a strong, inspectable baseline: word + character TF-IDF with logistic regression. The final version adds cost-sensitive weighting and a separate protected-class gate. This makes the failure mode explicit and testable.
@@ -23,6 +27,16 @@ For RAG, the app uses hybrid retrieval. If `sentence-transformers` is installed 
 See [`docs/architecture.md`](docs/architecture.md) for the full diagram and rationale.
 
 ## Quick start
+
+The app now includes Employee ID accounts, phone/password plus email OTP, a tenant
+support inbox, callback requests, and email status updates. Confidence below 90%
+automatically raises a ticket; **Talk to a person** is always available after sign-in.
+See [`docs/support_workflow.md`](docs/support_workflow.md) for the complete flow.
+
+Local setup provides a **private Dataeko demo mailbox** at `http://127.0.0.1:8025`.
+This receives local SMTP only. Employee/mailbox access details are generated under
+ignored `var/` files; demo executives are fictional and no real call is placed.
+For internet email, configure a sender you control in the ignored secrets file.
 
 Use **Python 3.12** for the tested development environment. The Windows launcher
 creates `.venv`, installs locked dependencies (including pytest), trains the classifier,
@@ -133,7 +147,7 @@ Metrics reported:
 | Silent Security/Fraud → General Inquiry misroutes | **0** |
 | Retrieval Hit@3 | **100%** |
 | Retrieval MRR@3 | **0.967** |
-| Tests | **6/6 passing** |
+| Tests | **68/68 passing** |
 
 See [`docs/EVALUATION.md`](docs/EVALUATION.md) for the detailed report and caveats. The Security/Fraud holdout contains only one row, so the separate 15-case challenge set is intentionally reported alongside it.
 
@@ -142,10 +156,10 @@ See [`docs/EVALUATION.md`](docs/EVALUATION.md) for the detailed report and cavea
 The system does **not** assume that retrieval always found an answer.
 
 - A minimum relevance threshold gates generation.
-- Below threshold, the app explicitly abstains.
+- Absolute evidence checks, not query-relative ranking alone, control abstention.
 - The LLM prompt forbids using facts outside retrieved KB context.
 - Only open-weight Ollama inference is supported.
-- Generated citations must match retrieved source IDs.
+- Generated claims must match exact evidence in their cited retrieved articles.
 - Invalid LLM output falls back to an extractive grounded response.
 
 This does not prove zero hallucinations under every possible input; it creates measurable, enforceable boundaries and a safe fallback.
@@ -169,7 +183,11 @@ If you prefer the sentence-transformer backend on a host that can install PyTorc
 pytest
 ```
 
-Tests cover the security gate, high-value retrieval cases, protected-class routing, and the no-KB-match abstention path. GitHub Actions runs data generation, training, and tests on every push/PR.
+Tests cover the security gate, high-value retrieval cases, protected-class routing,
+the no-KB-match abstention path, unsupported claims, Employee ID/OTP authentication,
+tenant and owner isolation, mailbox login, automatic/direct support handoff,
+delivery retries, and UI review/reset/retry behavior. GitHub Actions
+runs dependency checks, training, retrieval evaluation, and tests on every push/PR.
 
 ## Known limitations
 

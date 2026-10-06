@@ -4,6 +4,7 @@
 
 - Python: 3.12.10, in `.venv` under the repository root.
 - Streamlit: 1.65.0; scikit-learn: 1.9.1; NumPy: 2.5.3; pandas: 2.3.3.
+- `extra-streamlit-components`: 0.1.81 for refresh-persistent support sessions.
 - pytest: 9.1.1.
 - Retrieval: BM25 plus TF-IDF, without a model download.
 - Generation: deterministic extractive fallback, without a model API.

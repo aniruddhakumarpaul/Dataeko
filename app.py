@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime, timedelta
+import logging
+import os
 import sys
 
 import pandas as pd
 import streamlit as st
+import extra_streamlit_components as stx
 
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
@@ -13,11 +17,25 @@ from triage.classifier import fit_classifier, save_classifier  # noqa: E402
 from triage.constants import COST_SENSITIVE_CLASS_WEIGHTS  # noqa: E402
 from triage.pipeline import TriagePipeline  # noqa: E402
 from triage.safety import audit_label_conflicts  # noqa: E402
+from triage.review import review_decision  # noqa: E402
+from triage.support_ui import clear_ticket_submission, render_raise_ticket, render_support_inbox, render_my_tickets, raise_ticket  # noqa: E402
+from triage.tickets import TicketStore  # noqa: E402
+from triage.accounts import AccountService  # noqa: E402
+from triage.auth_ui import render_authentication  # noqa: E402
+from triage.mail import MailService  # noqa: E402
+from triage.review import direct_human_result  # noqa: E402
 
-st.set_page_config(page_title="Support Ticket Triage Assistant", page_icon="🎫", layout="wide")
+st.set_page_config(page_title="Ticket triage", page_icon="🎫", layout="centered")
+st.set_option("client.toolbarMode", "minimal")
+st.html("""
+<style>
+.block-container { padding-top: 2rem; padding-bottom: 2rem; }
+.block-container h1 { font-size: 2rem; }
+</style>
+""")
 
 
-@st.cache_resource(show_spinner="Loading classifier and knowledge base…")
+@st.cache_resource(show_spinner="Getting ready…")
 def load_pipeline() -> TriagePipeline:
     model_path = ROOT / "artifacts" / "classifier.joblib"
     if not model_path.exists():
@@ -36,89 +54,233 @@ def load_pipeline() -> TriagePipeline:
     return TriagePipeline(model_path=model_path, kb_dir=ROOT / "kb")
 
 
-pipeline = load_pipeline()
+@st.cache_resource
+def load_services():
+    store = TicketStore(os.getenv("SUPPORT_DB_PATH", str(ROOT / "var" / "support.sqlite3")))
+    mail = MailService(store, ROOT)
+    return store, mail, AccountService(store, mail)
 
-st.title("Support Ticket Triage Assistant")
-st.caption("Cost-aware triage + protected Security/Fraud routing + grounded knowledge-base response drafting")
 
-with st.sidebar:
-    st.subheader("Design")
-    st.markdown(
-        """
-- **Classifier:** word + character TF-IDF → class-weighted logistic regression
-- **Security guard:** high-recall lexical gate + probability review floor
-- **Retrieval:** hybrid BM25 + local semantic similarity
-- **Generation:** Ollama open-weight model when enabled; grounded extractive fallback otherwise
-- **Abstention:** no KB match → no invented answer
-        """
+store, mail, accounts = load_services()
+session_cookies = stx.CookieManager(key="support_session_cookie")
+if st.session_state.pop("sign_out_requested", False):
+    session_cookies.set(
+        "dataeko_support_session",
+        "",
+        key="delete_support_session",
+        expires_at=datetime.now() - timedelta(days=1),
+        secure=st.context.url.startswith("https://"),
+        same_site="strict",
     )
-    st.caption(f"Retrieval backend: {pipeline.retriever.backend}")
+    st.session_state.clear()
+cookie_token = st.context.cookies.get("dataeko_support_session", "")
+session_token = st.session_state.get("auth_session") or cookie_token
+principal = accounts.resolve_session(session_token)
+if principal is not None:
+    st.session_state["auth_session"] = session_token
+    if cookie_token != session_token and not st.session_state.get("auth_cookie_saved"):
+        session_cookies.set(
+            "dataeko_support_session",
+            session_token,
+            key="save_support_session",
+            expires_at=datetime.now() + timedelta(hours=8),
+            secure=st.context.url.startswith("https://"),
+            same_site="strict",
+        )
+        st.session_state["auth_cookie_saved"] = True
+if principal is None:
+    continuation = st.query_params.get("auth_challenge", "")
+    if (mail.mode == "demo" or mail.setting("host") in {"127.0.0.1", "localhost"}) and continuation and accounts.active_challenge(continuation):
+        st.session_state["pending_challenge"] = continuation
+        st.query_params.clear()
+    render_authentication(accounts, mail)
+    st.stop()
+
+
+def sign_out():
+    accounts.logout(session_token)
+    st.session_state.clear()
+    st.session_state["sign_out_requested"] = True
+
+
+st.caption(f"{principal.tenant_name} · {principal.name} · {principal.employee_id}")
+st.button("Sign out", on_click=sign_out)
+if principal.role == "staff":
+    render_support_inbox(store, mail, principal, accounts)
+    st.stop()
+if st.query_params.get("view") == "support":
+    st.error("This inbox is available only to your organisation's support team.")
+    st.stop()
+view = st.radio("Support view", ["New request", "My tickets"], horizontal=True, label_visibility="collapsed")
+if view == "My tickets":
+    render_my_tickets(store, mail, principal)
+    st.stop()
+if mail.setting("host") in {"127.0.0.1", "localhost"} or mail.mode == "demo":
+    st.caption("Local demo: email is delivered to the Dataeko demo mailbox, and executives are simulated.")
+
 
 samples = {
-    "General": "Where can I see the details of my current plan and update my profile?",
-    "Billing": "I was charged twice for my monthly subscription. How do I get the duplicate charge refunded?",
-    "Technical": "The app crashes every time I open settings after logging in.",
-    "Feature": "Could you add scheduled weekly exports to CSV?",
-    "Security": "I see an unknown login and a charge I did not make. I think my account was hacked.",
+    "Account question": "Where can I see the details of my current plan and update my profile?",
+    "Billing question": "I was charged twice for my monthly subscription. How do I get the duplicate charge refunded?",
+    "Something isn't working": "The app crashes every time I open settings after logging in.",
+    "Feature suggestion": "Could you add scheduled weekly exports to CSV?",
+    "Account safety": "I see an unknown login and a charge I did not make. I think my account was hacked.",
 }
 
-selected = st.selectbox("Sample ticket", ["Custom"] + list(samples.keys()))
-default_text = "" if selected == "Custom" else samples[selected]
-ticket = st.text_area("Ticket text", value=default_text, height=170, placeholder="Paste a support ticket here…")
 
-if st.button("Analyze ticket", type="primary", use_container_width=True):
+def choose_example() -> None:
+    selected = st.session_state["example"]
+    if selected in samples:
+        st.session_state["ticket_text"] = samples[selected]
+        st.session_state.pop("result", None)
+        clear_ticket_submission()
+
+
+def start_over() -> None:
+    st.session_state["ticket_text"] = ""
+    st.session_state["example"] = "Choose an example"
+    st.session_state.pop("result", None)
+    clear_ticket_submission()
+
+
+st.session_state.setdefault("ticket_text", "")
+
+st.title("How can we help?")
+st.write("Check help articles or ask a support executive to contact you.")
+
+with st.expander("Try an example"):
+    st.selectbox(
+        "Example message",
+        ["Choose an example"] + list(samples),
+        key="example",
+        on_change=choose_example,
+    )
+
+with st.form("ticket_form"):
+    ticket = st.text_area(
+        "Customer message",
+        key="ticket_text",
+        height=140,
+        placeholder="Paste the customer's message here…",
+    )
+    submitted = st.form_submit_button("Analyze ticket", type="primary", width="stretch")
+    human_requested = st.form_submit_button("Talk to a person", width="stretch")
+    st.caption("Requesting a person raises a ticket immediately and shares your account phone number with support.")
+
+if submitted or human_requested:
+    st.session_state.pop("result", None)
+    if not (st.session_state.get("raised_ticket")
+            and ticket.strip() == st.session_state.get("analyzed_message")):
+        clear_ticket_submission()
     if not ticket.strip():
-        st.warning("Enter a ticket first.")
+        st.warning("Paste a customer message before analyzing.")
     else:
-        with st.spinner("Triaging and retrieving evidence…"):
-            result = pipeline.run(ticket.strip())
+        st.session_state["analyzed_message"] = ticket.strip()
+        try:
+            with st.spinner("Reading the message and checking help articles…"):
+                if human_requested:
+                    st.session_state["result"] = direct_human_result(ticket.strip())
+                    st.session_state["retrieval_backend"] = "not needed for a direct human request"
+                    raise_ticket(store, mail, principal, st.session_state["result"], ticket.strip(), direct_human=True)
+                else:
+                    pipeline = load_pipeline()
+                    st.session_state["result"] = pipeline.run(ticket.strip())
+                    st.session_state["retrieval_backend"] = pipeline.retriever.backend
+                    if review_decision(st.session_state["result"]).required:
+                        raise_ticket(store, mail, principal, st.session_state["result"], ticket.strip(), direct_human=False)
+                st.session_state["analyzed_message"] = ticket.strip()
+        except Exception:
+            logging.exception("Ticket analysis failed")
+            st.error("We couldn't analyze this message. Try again in a moment.")
 
-        c = result.classification
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Predicted category", c.category)
-        col2.metric("Confidence", f"{c.confidence:.1%}")
-        col3.metric("Human review", "Required" if c.needs_human_review else "Not required")
+result = st.session_state.get("result")
+if result is not None:
+    c = result.classification
+    review = review_decision(result)
 
-        if c.category == "Security / Fraud":
-            st.error("Security / Fraud protected route: this ticket should be escalated for human review.")
-        elif c.needs_human_review:
-            st.warning(c.review_reason or "Human review required.")
-        else:
-            st.success("Automatic routing allowed under the current thresholds.")
+    with st.container(border=True):
+        category_column, confidence_column = st.columns([2, 1])
+        category_column.caption("Category")
+        category_column.markdown(f"**{c.category}**")
+        confidence_column.caption("Confidence")
+        confidence_column.markdown(f"**{c.confidence:.2%}**" if result.draft.generation_mode != "human-request" else "**Human request**")
 
+    if review.security:
+        st.warning(
+            "**Security review needed**\n\n"
+            "This message may involve account access or payment misuse. "
+            "Ask a security specialist to review it before sending a reply."
+        )
+    elif review.required and result.draft.grounded:
+        st.warning(
+            "**Human review required**\n\n"
+            + ("A ticket has been raised for a support engineer to review this request."
+               if st.session_state.get("raised_ticket") else
+               "A support engineer needs to check this message. Raise a ticket below so they can help.")
+        )
+
+    if not result.draft.grounded and result.draft.generation_mode != "human-request":
+        st.info(
+            "A support engineer will review it and prepare a response."
+        )
+
+    if result.draft.grounded:
+        with st.container(border=True):
+            st.subheader("Suggested reply")
+            st.markdown(result.draft.text)
+            st.caption("Review the wording before sending it to the customer.")
+            st.download_button(
+                "Save reply",
+                data=result.draft.text,
+                file_name="suggested-reply.txt",
+                mime="text/plain",
+                on_click="ignore",
+            )
+
+    render_raise_ticket(store, mail, principal, result, review, st.session_state["analyzed_message"])
+
+    if result.draft.grounded:
+        with st.expander("Help articles used"):
+            for hit in result.retrieval:
+                if hit.source_id not in result.draft.cited_sources:
+                    continue
+                st.markdown(f"**{hit.title} [{hit.source_id}]**")
+                st.markdown(hit.text)
+
+    with st.expander("Technical details"):
+        st.caption("For evaluation and troubleshooting.")
+        st.write(f"Search method: {st.session_state['retrieval_backend']}")
+        st.write(f"Reply method: {result.draft.generation_mode}")
+        if c.review_reason:
+            st.write(c.review_reason)
+        st.write(f"Human attention required: {'Yes' if review.required else 'No'}")
         if c.safety.reasons:
-            st.caption("Safety signals: " + ", ".join(c.safety.reasons))
-
-        with st.expander("Classifier probabilities"):
-            probs = pd.DataFrame(
+            st.write("Detected signals: " + ", ".join(c.safety.reasons))
+        if result.draft.reason:
+            st.write(result.draft.reason)
+        st.dataframe(
+            pd.DataFrame(
                 sorted(c.probabilities.items(), key=lambda x: x[1], reverse=True),
                 columns=["Category", "Probability"],
-            )
-            st.dataframe(probs, hide_index=True, use_container_width=True)
-
-        st.subheader("Suggested first response")
-        if result.draft.grounded:
-            st.markdown(result.draft.text)
-            st.caption(f"Generation mode: {result.draft.generation_mode} · Sources: {', '.join(result.draft.cited_sources)}")
-        else:
-            st.warning(result.draft.text)
-            st.caption(result.draft.reason or "Abstained")
-
-        st.subheader("Retrieved evidence")
-        evidence = pd.DataFrame(
-            [
+            ),
+            hide_index=True,
+            width="stretch",
+        )
+        st.dataframe(
+            pd.DataFrame([
                 {
                     "Source": h.source_id,
                     "Article": h.title,
-                    "Hybrid relevance": round(h.score, 3),
+                    "Relevance": round(h.score, 3),
                     "Lexical": round(h.lexical_score, 3),
                     "Semantic": round(h.semantic_score, 3),
                 }
                 for h in result.retrieval
-            ]
+            ]),
+            hide_index=True,
+            width="stretch",
         )
-        st.dataframe(evidence, hide_index=True, use_container_width=True)
 
-        for hit in result.retrieval[:3]:
-            with st.expander(f"{hit.source_id} — {hit.title} ({hit.score:.3f})"):
-                st.markdown(hit.text)
+    st.button("Start over", on_click=start_over)
+
+st.caption("Demo using sample tickets and help articles.")

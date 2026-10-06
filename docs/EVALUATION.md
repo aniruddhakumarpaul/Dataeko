@@ -57,4 +57,27 @@ The production app additionally applies an absolute relevance gate. An out-of-do
 
 ## Test suite
 
-The repository test suite currently covers: security-signal detection, normal billing non-escalation, unauthorized-charge retrieval, password-reset retrieval, the protected routing invariant, and RAG abstention for an out-of-domain query. The current run passes **6/6 tests**.
+The six backend tests cover security-signal detection, normal billing non-escalation,
+unauthorized-charge retrieval, password-reset retrieval, the protected routing
+invariant, and RAG abstention for an out-of-domain query. Eight UI tests additionally
+cover empty input, persisted results, manual handling, security review, security with
+abstention, examples, reset, and failure/retry. After the UI update, the current local
+run originally passed **14/14 tests**. The subsequent workflow/security update passes
+**68/68 tests**, including account/OTP lifecycle, tenant/owner authorization, independent
+mailbox access, automatic escalation below 90%, direct human requests, out-of-domain
+keyword overlap, unsupported generated claims, persistence, status updates, retries,
+and concurrent/stale update handling. This remains synthetic/local evidence, not a
+claim of production accuracy or zero failures for arbitrary future inputs.
+
+Browser verification completed an Employee ID registration, email OTP in a separately
+authenticated demo mailbox, automatic ticket creation for an 87.07% Billing result,
+staff receipt of the callback number, a recorded resolution, and the customer's
+private resolution email. The mailbox Back to support link restored the OTP step.
+Retraining retained macro F1 0.8793, weighted F1 0.9463, challenge safe handling 15/15,
+Hit@3 1.0, and MRR@3 0.9667. The 90% review threshold affects routing, not raw model F1.
+
+The subsequent demo password-policy update was checked with 8 focused account/password
+tests and 1 mailbox test. These verified short and long demo passwords, registration
+with a one-character password, matching password verification, empty-password rejection,
+and retention of the non-demo policy. The 68-test workflow run above predates this
+small follow-up; it was not repeated for this change.

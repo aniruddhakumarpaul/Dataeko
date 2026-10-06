@@ -30,6 +30,9 @@ class RetrievalHit:
     score: float
     lexical_score: float
     semantic_score: float
+    answerable: bool | None = None
+    query_coverage: float = 0.0
+    raw_bm25: float = 0.0
 
 
 @dataclass

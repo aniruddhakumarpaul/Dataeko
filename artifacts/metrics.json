@@ -120,9 +120,9 @@
       {
         "ticket_id": "S001",
         "expected": "Security / Fraud",
-        "predicted": "Billing",
+        "predicted": "Security / Fraud",
         "review": true,
-        "confidence": 0.5194281529582367
+        "confidence": 0.6
       },
       {
         "ticket_id": "S002",
@@ -190,9 +190,9 @@
       {
         "ticket_id": "S011",
         "expected": "Security / Fraud",
-        "predicted": "General Inquiry",
+        "predicted": "Security / Fraud",
         "review": true,
-        "confidence": 0.49810705880208833
+        "confidence": 0.6
       },
       {
         "ticket_id": "S012",
@@ -206,7 +206,7 @@
         "expected": "Security / Fraud",
         "predicted": "Security / Fraud",
         "review": true,
-        "confidence": 0.55
+        "confidence": 0.75
       },
       {
         "ticket_id": "S014",
@@ -226,7 +226,7 @@
         "ticket_id": "N001",
         "expected": "Technical Issue",
         "predicted": "Technical Issue",
-        "review": false,
+        "review": true,
         "confidence": 0.5866398417326499
       },
       {

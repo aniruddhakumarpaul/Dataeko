@@ -11,4 +11,7 @@ artifacts/*.pkl
 artifacts/*.bin
 artifacts/*.pt
 artifacts/*.safetensors
+var/
+*.sqlite3
+*.sqlite3-*
 # Evaluation JSON is reproducible, but generated model weights stay local.

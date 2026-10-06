@@ -11,7 +11,7 @@ CATEGORIES = [
 SECURITY_CATEGORY = "Security / Fraud"
 
 # Deliberately conservative. The protected class is rare and has asymmetric cost.
-LOW_CONFIDENCE_THRESHOLD = 0.58
+LOW_CONFIDENCE_THRESHOLD = 0.90
 SECURITY_FORCE_THRESHOLD = 0.24
 SECURITY_REVIEW_THRESHOLD = 0.08
 RETRIEVAL_MIN_RELEVANCE = 0.20

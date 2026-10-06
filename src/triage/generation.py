@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import json
 import re
 from typing import Sequence
 
@@ -20,6 +21,33 @@ def _allowed_source_ids(hits: Sequence[RetrievalHit]) -> set[str]:
     return {h.source_id for h in hits}
 
 
+def _eligible(hits: Sequence[RetrievalHit]) -> list[RetrievalHit]:
+    return [h for h in hits if h.answerable is True or (h.answerable is None and h.score >= RETRIEVAL_MIN_RELEVANCE)]
+
+
+def _validated_claims(payload: str, hits: Sequence[RetrievalHit]) -> tuple[str, list[str]] | None:
+    if len(payload) > 15000:
+        return None
+    try:
+        claims = json.loads(payload)["claims"]
+        if not isinstance(claims, list) or not 1 <= len(claims) <= 3:
+            return None
+        sources = {h.source_id: re.sub(r"\s+", " ", h.text).strip() for h in hits}
+        lines, cited = [], []
+        for claim in claims:
+            source = claim["source_id"]
+            text = re.sub(r"\s+", " ", claim["text"]).strip()
+            evidence = re.sub(r"\s+", " ", claim["evidence"]).strip()
+            # Use exact evidence text, not unverifiable model paraphrases.
+            if not text or len(text) > 1000 or text != evidence or source not in sources or evidence not in sources[source]:
+                return None
+            lines.append(f"{evidence} [{source}]")
+            cited.append(source)
+        return "\n\n".join(lines), sorted(set(cited))
+    except (ValueError, KeyError, TypeError):
+        return None
+
+
 def _validate_citations(text: str, hits: Sequence[RetrievalHit]) -> tuple[bool, list[str]]:
     cited = re.findall(r"\[(KB-\d{3})\]", text)
     if not cited:
@@ -31,7 +59,8 @@ def _validate_citations(text: str, hits: Sequence[RetrievalHit]) -> tuple[bool, 
 
 
 def _extractive_fallback(ticket: str, hits: Sequence[RetrievalHit]) -> DraftResult:
-    if not hits or hits[0].score < RETRIEVAL_MIN_RELEVANCE:
+    hits = _eligible(hits)
+    if not hits:
         return DraftResult(
             text=NO_ANSWER,
             grounded=False,
@@ -49,9 +78,7 @@ def _extractive_fallback(ticket: str, hits: Sequence[RetrievalHit]) -> DraftResu
 
     response = (
         "Thanks for reaching out. Based on our help-center guidance, the relevant next step is: "
-        f"{evidence} [{best.source_id}]\n\n"
-        "If those steps do not resolve the issue, reply with the exact error message or the time the issue occurred so a support engineer can investigate further. "
-        f"[{best.source_id}]"
+        f"{evidence} [{best.source_id}]"
     )
     return DraftResult(
         text=response,
@@ -66,7 +93,8 @@ def _ollama_generate(ticket: str, hits: Sequence[RetrievalHit]) -> DraftResult |
     model = os.getenv("OLLAMA_MODEL", "qwen3:4b")
     if os.getenv("USE_OLLAMA", "0").lower() not in {"1", "true", "yes"}:
         return None
-    if not hits or hits[0].score < RETRIEVAL_MIN_RELEVANCE:
+    hits = _eligible(hits)[:3]
+    if not hits:
         return DraftResult(
             text=NO_ANSWER,
             grounded=False,
@@ -87,6 +115,9 @@ def _ollama_generate(ticket: str, hits: Sequence[RetrievalHit]) -> DraftResult |
         "Cite every factual/procedural paragraph with one or more source IDs exactly like [KB-001]. "
         "If the context does not answer the ticket, say you do not have enough KB information and recommend manual handling. "
         "Be concise, calm, and customer-safe."
+        ' Return ONLY JSON with a claims array. Each claim must have source_id, text, and evidence.'
+        ' Both text and evidence must be the same exact quote from that source, with no added words.'
+        ' Select up to three useful evidence passages. Do not paraphrase or add promises.'
     )
     user = f"TICKET:\n{ticket}\n\nKNOWLEDGE BASE:\n{context}\n\nDraft the first response."
 
@@ -96,6 +127,7 @@ def _ollama_generate(ticket: str, hits: Sequence[RetrievalHit]) -> DraftResult |
             json={
                 "model": model,
                 "stream": False,
+                "format": "json",
                 "messages": [
                     {"role": "system", "content": system},
                     {"role": "user", "content": user},
@@ -106,9 +138,10 @@ def _ollama_generate(ticket: str, hits: Sequence[RetrievalHit]) -> DraftResult |
         )
         response.raise_for_status()
         text = response.json()["message"]["content"].strip()
-        valid, cited = _validate_citations(text, hits)
-        if not valid:
+        validated = _validated_claims(text, hits)
+        if validated is None:
             return None
+        text, cited = validated
         return DraftResult(
             text=text,
             grounded=True,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Iterable
 
 import joblib
@@ -116,6 +117,14 @@ def classify_ticket(model: Pipeline, text: str) -> ClassificationResult:
     if safety.triggered:
         needs_review = True
         review_reason = "Security-adjacent language detected; ticket requires human review."
+
+    if re.search(
+        r"\b(?:human|real person|support agent|support engineer|someone from support)\b|"
+        r"\b(?:call|contact) me\b|\b(?:still|not) (?:working|resolved|fixed)\b",
+        text, re.IGNORECASE,
+    ):
+        needs_review = True
+        review_reason = "The customer requested a person or reported that the issue remains unresolved."
 
     return ClassificationResult(
         category=model_category,

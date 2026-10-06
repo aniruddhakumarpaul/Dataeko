@@ -31,14 +31,40 @@ NEGATION_SAFE_PATTERNS = [
     r"\bis this email legitimate\b",
 ]
 
+FINANCIAL_OBJECTS = r"\b(purchases?|orders?|charges?|payments?|transactions?|debits?|withdrawals?)\b"
+ACCOUNT_OBJECTS = r"\b(accounts?|profiles?|passwords?|emails?|credentials?|messages?)\b"
+UNAUTHORIZED_INTENT = (
+    r"\b(?:(?:did not|didn't|never)\s+(?:authori[sz](?:e|ed)|approve(?:d)?|ma(?:ke|de)|request(?:ed)?)|"
+    r"(?:do not|don't|dont)\s+recogni[sz]e|not mine|without (?:my )?(?:permission|consent)|"
+    r"not authori[sz]ed by me|someone else|stranger|another person)\b"
+)
+ACCOUNT_ACTIONS = r"\b(chang\w*|edit\w*|access\w*|us\w*|read\w*|send\w*|different)\b"
+
+
+def _compositional_signals(text: str) -> list[str]:
+    reasons = []
+    # Pair activity with unauthorized intent within the same short sentence rather
+    # than treating a financial noun alone as proof of fraud.
+    for clause in re.split(r"[.!?;\n]", text):
+        if not re.search(UNAUTHORIZED_INTENT, clause):
+            continue
+        if re.search(FINANCIAL_OBJECTS, clause):
+            reasons.append("financial activity not authorized by the customer")
+        if re.search(ACCOUNT_OBJECTS, clause) and re.search(ACCOUNT_ACTIONS, clause):
+            reasons.append("account activity not requested by the customer")
+    return list(dict.fromkeys(reasons))
+
 
 def detect_security_signals(text: str) -> SafetySignal:
-    cleaned = " ".join(text.lower().split())
+    cleaned = " ".join(text.lower().replace("’", "'").split())
     if not cleaned:
         return SafetySignal(triggered=False, score=0.0, reasons=[])
 
     reasons: list[str] = []
     score = 0.0
+    for reason in _compositional_signals(cleaned):
+        reasons.append(reason)
+        score = max(score, 0.60)
     for pattern, reason, weight in SECURITY_PATTERNS:
         if re.search(pattern, cleaned, flags=re.IGNORECASE | re.DOTALL):
             reasons.append(reason)
@@ -47,7 +73,8 @@ def detect_security_signals(text: str) -> SafetySignal:
     # Security questions are still safety-relevant, but less urgent than an active incident.
     for pattern in NEGATION_SAFE_PATTERNS:
         if re.search(pattern, cleaned, flags=re.IGNORECASE):
-            score = min(score, 0.35) if score else 0.20
+            # A guidance question must not downgrade an accompanying incident.
+            score = max(score, 0.20)
             if "security guidance request" not in reasons:
                 reasons.append("security guidance request")
 

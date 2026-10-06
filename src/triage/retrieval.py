@@ -33,7 +33,19 @@ QUERY_EXPANSIONS = {
     "billed twice": "duplicate charge",
     "dark mode": "feature request product improvement",
     "add feature": "feature request product improvement",
+    "did not authorize": "unauthorized fraudulent charge",
+    "didn't authorize": "unauthorized fraudulent charge",
 }
+
+GENERIC_QUERY_WORDS = {
+    "where", "when", "why", "how", "what", "will", "there", "right", "cannot", "same",
+    "change", "download", "help", "support", "need", "want", "find", "get", "using", "use",
+    "please", "tell", "someone", "open", "see", "add", "keeps", "got", "last",
+}
+
+
+def _coverage_tokens(text: str) -> set[str]:
+    return {"app" if t == "application" else t for t in _tokenize(text) if t not in GENERIC_QUERY_WORDS}
 
 def _expand_query(text: str) -> str:
     lower = text.lower()
@@ -140,6 +152,15 @@ class HybridRetriever:
         hits: list[RetrievalHit] = []
         for idx in order:
             c = self.chunks[int(idx)]
+            query_tokens = _coverage_tokens(expanded)
+            matches = query_tokens & _coverage_tokens(self.texts[int(idx)])
+            coverage = len(matches) / len(query_tokens) if query_tokens else 0.0
+            # Ranking is query-relative. Eligibility uses absolute evidence instead.
+            answerable = (
+                bool(query_tokens) and coverage >= 0.35
+                and (len(matches) >= 2 or len(query_tokens) == 1)
+                and (semantic_raw[idx] >= 0.14 or lexical_raw[idx] >= 2.0)
+            )
             hits.append(
                 RetrievalHit(
                     source_id=c.source_id,
@@ -149,6 +170,9 @@ class HybridRetriever:
                     score=float(hybrid[idx]),
                     lexical_score=float(lexical[idx]),
                     semantic_score=float(semantic[idx]),
+                    answerable=bool(answerable),
+                    query_coverage=float(coverage),
+                    raw_bm25=float(lexical_raw[idx]),
                 )
             )
         return hits
