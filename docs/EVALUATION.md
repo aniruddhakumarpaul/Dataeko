@@ -101,12 +101,12 @@ the `.venv` Python executable.
 | Non-security challenge forced to Security/Fraud | 0% | 0% | 0 |
 | Retrieval Hit@3 | 1.000 | 1.000 | 0 |
 | Retrieval MRR@3 | 0.9666667 | 0.9666667 | 0 |
-| Full test suite | 68 passed in the prior report | 86 passed | +18 collected cases |
+| Full test suite | 68 passed in the prior report | 87 passed | +19 collected cases |
 
 The Security/Fraud holdout recall still has support of only one ticket. The challenge
 suite is targeted rather than prevalence-representative. The test-count difference
 reflects the older report and later test-suite growth; the current run also includes
-three new baseline-manifest tests. It is not a model-quality comparison.
+four new baseline-manifest tests. It is not a model-quality comparison.
 
 `pip check` returned “No broken requirements found.” Training and retrieval evaluation
 exited successfully, and all four recorded metric comparisons were identical. The
@@ -115,6 +115,6 @@ were absent, and two assertions still expected the removed “Manual reply neede
 The test fixture now supplies a local URL and empty cookie mapping, and those assertions
 check the approved sentence. This changes test setup and expectations only; no app,
 classifier, retrieval, generation, KB, data, ticket, or authentication behavior changed.
-The final full run passed 86/86 with no failures, errors, or skipped tests. Classifier,
+The final full run passed 87/87 with no failures, errors, or skipped tests. Classifier,
 safety, and retrieval metrics all matched the preserved values; no unexplained metric
 drift remains.

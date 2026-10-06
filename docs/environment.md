@@ -105,7 +105,7 @@ The earlier setup checks above are historical runs, including their six-test cou
 The fresh baseline reproduction is documented in [EVALUATION.md](EVALUATION.md) and
 summarized by `artifacts/baseline_manifest.json`. It used Python 3.12.10, the locked
 lightweight environment, `USE_OLLAMA=0`, and TF-IDF retrieval. `pip check`, training,
-retrieval evaluation, and the final 86-test suite completed successfully. The first
+retrieval evaluation, and the final 87-test suite completed successfully. The first
 pytest attempt found missing browser context in Streamlit AppTest and stale assertions
 for removed UI copy; test-only fixtures and assertions were corrected, then the full
 suite passed. Application and model behavior were not changed for this baseline.
