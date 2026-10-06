@@ -1,0 +1,129 @@
+{
+  "class_weights": {
+    "Billing": 1.5,
+    "Feature Request": 1.8,
+    "General Inquiry": 1.0,
+    "Security / Fraud": 10.0,
+    "Technical Issue": 1.7
+  },
+  "classifier_implementation": "triage.classifier.build_classifier: word/character TF-IDF + LogisticRegression",
+  "command_exit_status": {
+    "pip_check": 0,
+    "pytest": 0,
+    "retrieval_evaluation": 0,
+    "training": 0
+  },
+  "dataset": {
+    "class_distribution": {
+      "Billing": 43,
+      "Feature Request": 29,
+      "General Inquiry": 392,
+      "Security / Fraud": 4,
+      "Technical Issue": 32
+    },
+    "retrieval_eval_count": 15,
+    "row_count": 500,
+    "safety_eval_count": 20
+  },
+  "dependency_file_sha256": {
+    "requirements-dev.txt": "b42c64dddc8411ea43a763aba283f72f2dbe9db651a6707ee4a5b8a1a7f81d78",
+    "requirements-full.txt": "cfa0b7b0ea7a0e0699f1dc305866c6a9c0225d5bb08b5e371d7bd0d363a45dc7",
+    "requirements-lock.txt": "398a41e0b9bac6b33ad11fb36e66c7eeec1fa30af9e788799527b62d58db4ce1",
+    "requirements.txt": "4e30a8a1187b7381dcf86daed8386010461ec12db812b37d314b8c0d5ba4ebcb"
+  },
+  "dependency_versions": {
+    "extra-streamlit-components": "0.1.81",
+    "numpy": "2.5.3",
+    "pandas": "2.3.3",
+    "pip": "25.0.1",
+    "pytest": "9.1.1",
+    "requests": "2.34.2",
+    "scikit-learn": "1.9.1",
+    "streamlit": "1.65.0"
+  },
+  "dirty_worktree": false,
+  "generated_at_utc": "2026-10-06T10:31:58+00:00",
+  "generator_default": {
+    "enabled_by_default": false,
+    "mode": "validated Ollama claims when enabled; extractive fallback otherwise",
+    "ollama_enabled_for_run": false,
+    "ollama_model_default": "qwen3:4b"
+  },
+  "git_branch": "main",
+  "git_commit": "e494a1ac1acf816ac9cb51f585d987329920aa58",
+  "input_file_sha256": {
+    "artifacts/metrics.json": "9626cc59b2949b6cbbae23193916b2a9886f4ccce9c8f15f3478d5d853cdbe4d",
+    "artifacts/retrieval_metrics.json": "e504875e655c9d16594ff3e9327d45c30124df84a59fe6958cc7e3d1d4d62bfd",
+    "data/retrieval_eval.csv": "e86baa8e21441e47de6f426ee0fd2e17ef5f28d1b6a9bbbb8b5245591be637ad",
+    "data/safety_eval.csv": "0e0500c7111cd92d27bf5582f68c86329ac239c5082a7ea2f5024aafa8f325b4",
+    "data/tickets.csv": "1461c2bdaa86c40a9eb040694ca18da7589a4ab96a94acc8965b7c03e0636daf",
+    "scripts/evaluate.py": "0c5797a6b4611fff87d8c3fb93166411262e2cc666ab18124613c11eb21f67c6",
+    "scripts/generate_synthetic_data.py": "4d19eef58f0557700f67b19899a15dd70eb106e20948cfb19a637dfa508a982b",
+    "scripts/train_classifier.py": "caa7520994386e37360674f0c44c7e5d7440af1b89d7bf3cf41108813030bdb9",
+    "src/triage/classifier.py": "e852ed78b34481292c31dbe064826ff7df58c0b1f52f063a1f00f5a12772b69c",
+    "src/triage/constants.py": "17ddd3e336eb82950cd1222abb9cd4c82df70e1e3cb13b7f1e4649d80b8d5232",
+    "src/triage/generation.py": "89bd452fb29db5f0af31d82f0649ddc5dd04ca7101210d0e5265663a56cb073c",
+    "src/triage/retrieval.py": "3ea982dfea53778c1e90a041aa72d166b6e0b45a125ea0ad3aa506e7b2cf554a"
+  },
+  "kb": {
+    "article_count": 15,
+    "corpus_sha256": "a494be0d01e0d93c1c1cb15bf6b0a149d2a15e7d751393ecbf6d92252beb757e",
+    "file_sha256": {
+      "kb/01-account-settings.md": "a22d6d3ed038ac6962538ad2047af9621edc503cd8b7565244630435ae6305b6",
+      "kb/02-api-errors.md": "2760b6bcf03743a48479ba828077512c56ea11402cbd7cb3a0c7368a17e7b548",
+      "kb/03-app-crashes.md": "c067e3646a9f1b9d6db6ecb3e9445ce3336deafd28c8f0ee9b79af8b6ab0d74f",
+      "kb/04-duplicate-charge.md": "0cf782733bec2c22099c70471c6c759df835ed433e54cae1508f6abf9c68da1c",
+      "kb/05-failed-payment.md": "1e5a8581da0db6fc2efbd4b0542d075cbc87cfbb06e81c12f9cd0adb6412d8a7",
+      "kb/06-feature-requests.md": "02b06ffae1b43129795dc6ea61b4044ef750108c95a6059cb27b17811b507a0c",
+      "kb/07-login-troubleshooting.md": "61cd24bf583d2699d4720d08c23e309179b6d7d4fc38097ad82a8e77dc18da20",
+      "kb/08-password-reset.md": "94656b5bdaa48c3dbd907bc17b2a225213ec3b6889c7aaff9952db1a64c38edf",
+      "kb/09-phishing.md": "46d21c626e594b3c691c093e380758877a382e9232d71bde39d967e3697e395f",
+      "kb/10-refunds.md": "1b4e44dd770716b777247cdf76561d80734547dc11470ef8197bcf839be0c3cb",
+      "kb/11-roadmap-policy.md": "e432ac8d07d17ae9f8e9b8e0ad1b82f502cf80a837c9048e95c3cefee2ed1c8d",
+      "kb/12-subscription-pricing.md": "fe6d73108c2d8c1b48e12ec9f46900329febb0384a38af6f8a924d6429d8d883",
+      "kb/13-suspicious-login.md": "9683d7f1597ad2f1f73e20624e606b91bf5ff56b06d1d4c541ef01be74c0a0c8",
+      "kb/14-unauthorized-charges.md": "2d859b2f9cc0876a92bbe3fcb230c3ebbfcceac7e4b5228bda26dc43848ea360",
+      "kb/15-account-compromise.md": "1d4ee5c04a03c149a3cf0324e92ade77ed2c9466c61f9a804940c9605e292fdc"
+    }
+  },
+  "pytest": {
+    "errors": 0,
+    "failed": 0,
+    "passed": 87,
+    "skipped": 0,
+    "tests": 87
+  },
+  "python_version": "3.12.10",
+  "random_seeds": {
+    "classifier": 42,
+    "retrieval_evaluation": null,
+    "synthetic_data_generator": 42,
+    "training_split": 42
+  },
+  "recorded_historical_metrics": {
+    "classifier": "artifacts/baseline/recorded_metrics.json",
+    "retrieval": "artifacts/baseline/recorded_retrieval_metrics.json"
+  },
+  "recorded_metric_sha256": {
+    "artifacts/baseline/recorded_metrics.json": "9626cc59b2949b6cbbae23193916b2a9886f4ccce9c8f15f3478d5d853cdbe4d",
+    "artifacts/baseline/recorded_retrieval_metrics.json": "e504875e655c9d16594ff3e9327d45c30124df84a59fe6958cc7e3d1d4d62bfd"
+  },
+  "reproduced_metrics": {
+    "classifier": "artifacts/metrics.json",
+    "retrieval": "artifacts/retrieval_metrics.json"
+  },
+  "reproduced_retrieval_backend": "tfidf",
+  "reproduction_commands": [
+    ".\\.venv\\Scripts\\python.exe -m pip check",
+    ".\\.venv\\Scripts\\python.exe scripts\\train_classifier.py",
+    ".\\.venv\\Scripts\\python.exe scripts\\evaluate.py",
+    ".\\.venv\\Scripts\\python.exe -m pytest --junitxml=<temporary-junit-report>"
+  ],
+  "schema_version": 1,
+  "thresholds": {
+    "legacy_retrieval_min_relevance": 0.2,
+    "low_confidence": 0.9,
+    "security_force": 0.24,
+    "security_review": 0.08
+  }
+}
