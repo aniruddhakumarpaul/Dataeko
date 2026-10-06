@@ -2,7 +2,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from scripts.freeze_baseline import create_manifest, dataset_summary, sha256_file
+from scripts.freeze_baseline import create_manifest, dataset_summary, has_dirty_worktree, sha256_file
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,6 +14,11 @@ def test_sha256_is_stable_for_same_content(tmp_path):
     expected = hashlib.sha256(b"baseline\n").hexdigest()
     assert sha256_file(path) == expected
     assert sha256_file(path) == sha256_file(path)
+
+
+def test_dirty_state_ignores_its_own_generated_manifest_only():
+    assert not has_dirty_worktree("?? artifacts/baseline_manifest.json")
+    assert has_dirty_worktree("?? artifacts/baseline_manifest.json\n M src/triage/app.py")
 
 
 def test_dataset_summary_reports_current_class_counts():

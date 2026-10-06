@@ -115,6 +115,15 @@ def git_value(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
 
 
+def has_dirty_worktree(status: str) -> bool:
+    """Ignore this generated manifest so reruns report the same clean state."""
+    for line in status.splitlines():
+        relative = line[3:].strip().strip('"')
+        if relative and relative != MANIFEST_PATH.as_posix():
+            return True
+    return False
+
+
 def create_manifest(
     root: Path,
     pytest_result: dict[str, int],
@@ -176,7 +185,7 @@ def create_manifest(
         "generated_at_utc": generated_at or datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_commit": git_value(root, "rev-parse", "HEAD"),
         "git_branch": git_value(root, "branch", "--show-current"),
-        "dirty_worktree": bool(status),
+        "dirty_worktree": has_dirty_worktree(status),
         "python_version": platform.python_version(),
         "dependency_versions": packages,
         "dependency_file_sha256": requirement_hashes,
