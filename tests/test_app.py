@@ -74,7 +74,7 @@ def test_no_answer_requests_manual_handling_without_suggested_reply(app):
     at, pipeline = app
     pipeline.run.return_value = sample_result(category="General Inquiry", grounded=False)
     analyze(at, "What is the cafeteria menu?")
-    assert "Manual reply needed" in at.info[0].value
+    assert at.info[0].value == "A support engineer will review it and prepare a response."
     assert "support engineer" in at.info[0].value
     assert not any(item.value == "Suggested reply" for item in at.subheader)
     assert not any("Automatic routing allowed" in item.value for item in at.success)
@@ -93,7 +93,7 @@ def test_security_abstention_keeps_review_and_no_answer_explanations(app):
     pipeline.run.return_value = sample_result(category="Security / Fraud", grounded=False, review=True)
     analyze(at, "My account was hacked and I need help.")
     assert "Security review needed" in at.warning[0].value
-    assert "Manual reply needed" in at.info[0].value
+    assert at.info[0].value == "A support engineer will review it and prepare a response."
 
 
 def test_selecting_example_clears_previous_result(app):

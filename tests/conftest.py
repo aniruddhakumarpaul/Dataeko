@@ -14,6 +14,23 @@ from triage.tickets import TicketStore
 PASSWORD = "test-password-with-12-plus-characters"
 
 
+@pytest.fixture(autouse=True)
+def streamlit_app_test_url(monkeypatch):
+    """AppTest has no browser URL; provide the local HTTP origin used by the app."""
+    import streamlit as st
+
+    monkeypatch.setattr(
+        type(st.context),
+        "url",
+        property(lambda _context: "http://localhost:8501"),
+    )
+    monkeypatch.setattr(
+        type(st.context),
+        "cookies",
+        property(lambda _context: {}),
+    )
+
+
 @pytest.fixture
 def backend(tmp_path):
     store = TicketStore(tmp_path / "support.sqlite3")
