@@ -98,3 +98,14 @@ The model metrics reproduce the bundled rounded benchmark: macro F1 0.8793,
 weighted F1 0.946, security challenge safe handling 15/15, zero silent security
 to general misroutes, retrieval Hit@3 1.0, and MRR@3 0.9667. Synthetic benchmarks
 are not evidence of production accuracy.
+
+## Pre-upgrade baseline reproduction
+
+The earlier setup checks above are historical runs, including their six-test count.
+The fresh baseline reproduction is documented in [EVALUATION.md](EVALUATION.md) and
+summarized by `artifacts/baseline_manifest.json`. It used Python 3.12.10, the locked
+lightweight environment, `USE_OLLAMA=0`, and TF-IDF retrieval. `pip check`, training,
+retrieval evaluation, and the final 86-test suite completed successfully. The first
+pytest attempt found missing browser context in Streamlit AppTest and stale assertions
+for removed UI copy; test-only fixtures and assertions were corrected, then the full
+suite passed. Application and model behavior were not changed for this baseline.

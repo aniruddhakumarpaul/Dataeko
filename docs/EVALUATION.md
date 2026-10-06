@@ -2,12 +2,11 @@
 
 This report is generated from the bundled synthetic dataset with a fixed random seed. It is evidence for engineering behavior, not a claim about production accuracy. The Security/Fraud holdout contains only one example, so the dedicated challenge set is the more useful safety check.
 
-The rounded results below were reproduced locally on 2026-10-06 with Python 3.12.10
-and the versions captured in `requirements-lock.txt`. All 6 tests passed; the local
-browser check covered Billing with KB citations, protected Security/Fraud routing,
-and the out-of-domain abstention path. See [environment.md](environment.md) for
-setup and verification details. Remote CI and optional Ollama/embedding paths
-remain unverified in this setup run.
+The classifier and retrieval figures below were recorded from the synthetic
+benchmark. Their fresh pre-upgrade reproduction and the current test count are
+reported separately at the end of this document. See [environment.md](environment.md)
+for setup and verification details. Remote CI and optional Ollama/embedding paths
+remain unverified in this local run.
 
 ## Dataset
 
@@ -57,17 +56,14 @@ The production app additionally applies an absolute relevance gate. An out-of-do
 
 ## Test suite
 
-The six backend tests cover security-signal detection, normal billing non-escalation,
-unauthorized-charge retrieval, password-reset retrieval, the protected routing
-invariant, and RAG abstention for an out-of-domain query. Eight UI tests additionally
-cover empty input, persisted results, manual handling, security review, security with
-abstention, examples, reset, and failure/retry. After the UI update, the current local
-run originally passed **14/14 tests**. The subsequent workflow/security update passes
-**68/68 tests**, including account/OTP lifecycle, tenant/owner authorization, independent
-mailbox access, automatic escalation below 90%, direct human requests, out-of-domain
-keyword overlap, unsupported generated claims, persistence, status updates, retries,
-and concurrent/stale update handling. This remains synthetic/local evidence, not a
-claim of production accuracy or zero failures for arbitrary future inputs.
+Earlier reports recorded smaller test counts (6, 14, and later 68) as the suite grew.
+They describe those runs only; they are not the current suite size. The pre-upgrade
+reproduction below reports the current exact count. The test suite covers account/OTP
+lifecycle, tenant and owner authorization, independent mailbox access, automatic
+escalation below 90%, direct human requests, out-of-domain keyword overlap, unsupported
+generated claims, persistence, status updates, retries, and concurrent/stale updates.
+This remains synthetic/local evidence, not a claim of production accuracy or zero
+failures for arbitrary future inputs.
 
 Browser verification completed an Employee ID registration, email OTP in a separately
 authenticated demo mailbox, automatic ticket creation for an 87.07% Billing result,
@@ -81,3 +77,44 @@ tests and 1 mailbox test. These verified short and long demo passwords, registra
 with a one-character password, matching password verification, empty-password rejection,
 and retention of the non-demo policy. The 68-test workflow run above predates this
 small follow-up; it was not repeated for this change.
+
+## Fresh pre-upgrade baseline reproduction
+
+On 2026-10-06, the unchanged application, classifier, retrieval code, data, and KB were
+run in the project `.venv` with Python 3.12.10 and the locked lightweight environment.
+`USE_OLLAMA=0`; retrieval used TF-IDF fallback and no optional model was downloaded.
+The pre-run metrics are preserved byte-for-byte in `artifacts/baseline/`. The manifest
+at `artifacts/baseline_manifest.json` records the commit, dependency versions and lock
+hashes, dataset and KB hashes, backend, thresholds, and test summary. The reproduction
+commands were `python -m pip check`, `scripts/train_classifier.py`,
+`scripts/evaluate.py`, and `python -m pytest --junitxml=<temporary-junit-report>` using
+the `.venv` Python executable.
+
+| Metric | Recorded | Reproduced | Delta |
+|---|---:|---:|---:|
+| Classifier accuracy | 0.952 | 0.952 | 0 |
+| Macro F1 | 0.8793333 | 0.8793333 | 0 |
+| Weighted F1 | 0.9463200 | 0.9463200 | 0 |
+| Raw Security/Fraud holdout recall | 1.000 | 1.000 | 0 |
+| Protected challenge safe handling | 15/15 (100%) | 15/15 (100%) | 0 |
+| Silent Security/Fraud → General Inquiry challenge misroutes | 0 | 0 | 0 |
+| Non-security challenge forced to Security/Fraud | 0% | 0% | 0 |
+| Retrieval Hit@3 | 1.000 | 1.000 | 0 |
+| Retrieval MRR@3 | 0.9666667 | 0.9666667 | 0 |
+| Full test suite | 68 passed in the prior report | 86 passed | +18 collected cases |
+
+The Security/Fraud holdout recall still has support of only one ticket. The challenge
+suite is targeted rather than prevalence-representative. The test-count difference
+reflects the older report and later test-suite growth; the current run also includes
+three new baseline-manifest tests. It is not a model-quality comparison.
+
+`pip check` returned “No broken requirements found.” Training and retrieval evaluation
+exited successfully, and all four recorded metric comparisons were identical. The
+first full test attempt exposed AppTest limitations: its browser URL and cookie context
+were absent, and two assertions still expected the removed “Manual reply needed” copy.
+The test fixture now supplies a local URL and empty cookie mapping, and those assertions
+check the approved sentence. This changes test setup and expectations only; no app,
+classifier, retrieval, generation, KB, data, ticket, or authentication behavior changed.
+The final full run passed 86/86 with no failures, errors, or skipped tests. Classifier,
+safety, and retrieval metrics all matched the preserved values; no unexplained metric
+drift remains.
