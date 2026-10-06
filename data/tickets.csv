@@ -1,0 +1,501 @@
+ticket_id,text,label
+T0302,"I see a suspicious login from a device I don't recognize, but I only want to know where account settings are.",General Inquiry
+T0333,Quick question — How do I change my notification preferences? Can someone help me?,General Inquiry
+T0476,I want a way to pin favorite projects. Reference number 1004.,Feature Request
+T0449,Password reset link opens a blank page. This started today.,Technical Issue
+T0070,I need assistance. How can I export a copy of my profile information? I am using the web app.,Feature Request
+T0390,"Hello, How do I close an old workspace I no longer use? Can someone help me?",General Inquiry
+T0181,I need assistance. How do I change my notification preferences? Reference number 1180. Please advise.,General Inquiry
+T0126,Can you explain what is included in the basic plan? Reference number 1125.,General Inquiry
+T0171,"Hi support, Where do I really see my current subscription details? Can someone help me?",General Inquiry
+T0023,I need assistance. Can I use the product from two devices? Reference number 1022.,General Inquiry
+T0211,Quick question — How do I contact support about a general question? This started today.,General Inquiry
+T0308,"Hello, How do I close an old workspace I no longer use? I am using the web app.",General Inquiry
+T0324,Quick question — What countries is the service available in? Thanks.,General Inquiry
+T0183,I need assistance. What countries is the service available in? Please advise.,General Inquiry
+T0326,"Hello, Can you explain what is included in the basic plan? Can someone help me?",General Inquiry
+T0198,"Hello, Can you explain what is included in the basic plan?",General Inquiry
+T0422,Where can I download my billing invoice?,Billing
+T0338,Please help: I need help finding the account settings.,General Inquiry
+T0144,How do I contact support about a general question? Thanks.,General Inquiry
+T0305,"Hello, Can you explain what is included in the basic plan?",General Inquiry
+T0369,What countries is the service available in? Thanks.,General Inquiry
+T0176,Can I change the email used for normal notifications?,General Inquiry
+T0162,"Hi support, How can I export a copy of my profile information? Reference number 1161. Can someone help me?",General Inquiry
+T0094,Please help: Can you explain what is included in the basic plan? Reference number 1093. Thanks.,General Inquiry
+T0414,Please help: How do I request a refund for my latest payment?,Billing
+T0044,Can I use the product from two devices?,General Inquiry
+T0260,"Hello, How do I change my notification preferences? Reference number 1259.",General Inquiry
+T0265,Please help: Can I use the product from two devices? Thanks.,General Inquiry
+T0374,"Hello, I need help finding my account settings.",General Inquiry
+T0190,"Hello, How can I export a copy of my profile information? Reference number 1189. Can someone help me?",General Inquiry
+T0159,"Hello, How do I close an old workspace I no longer use? Can someone help me?",Billing
+T0284,Quick question — How do I update the name on the profile? I am using the web app.,General Inquiry
+T0367,Where do I see my current subscription details? This started today.,General Inquiry
+T0088,"Hello, Where can I really find the documentation for my account? Thanks.",General Inquiry
+T0467,"Hello, The app crashes every time I open the settings page.",Technical Issue
+T0359,Quick question — Can I change the email used for normal notifications? Reference number 1358. Thanks.,General Inquiry
+T0484,I want a way to pin favorite projects. Reference number 1012.,Feature Request
+T0304,"Hello, What countries is the service available in? This started today.",General Inquiry
+T0452,Please help: Password reset link opens a blank page.,Technical Issue
+T0067,How do I update the name on my profile?,General Inquiry
+T0065,Please help: How do I change the notification preferences? I am using the web app.,General Inquiry
+T0384,I need assistance. Can I change the email used for normal notifications? Please advise.,General Inquiry
+T0200,Quick question — How do I really update the name on my profile? Please advise.,General Inquiry
+T0431,I need assistance. My card was declined but it works elsewhere.,Billing
+T0257,"Hello, Can I change the email used for normal notifications? Please advise.",General Inquiry
+T0221,How do I contact support about a general question? Reference number 1220.,General Inquiry
+T0252,Please help: Can you explain what is included in the basic plan?,General Inquiry
+T0102,How do I update the name on my profile? Please advise.,General Inquiry
+T0399,Please help: How do I close an old workspace I no longer use? Reference number 1398.,General Inquiry
+T0111,How can I export a copy of the profile information? This started today.,General Inquiry
+T0456,"Hi support, The app crashes every time I open the settings page. Thanks.",Technical Issue
+T0358,"Hi support, What countries is the service available in? Can someone help me?",General Inquiry
+T0411,"Hello, My card was declined but it works elsewhere. Can someone help me?",Billing
+T0080,Quick question — Can I use the product from two devices? This started today.,General Inquiry
+T0448,Please help: Password reset link opens a blank page.,Technical Issue
+T0256,Quick question — Can I use the product from two devices? This started today.,General Inquiry
+T0014,"Hi support, Can I really use the product from two devices? Please advise.",General Inquiry
+T0226,Where can I really find the documentation for my account? Can someone help me?,General Inquiry
+T0428,Quick question — My payment failed when renewing my subscription.,Billing
+T0243,How do I contact support about a general question? Reference number 1242. Can someone help me?,General Inquiry
+T0409,Please explain the tax line on my invoice.,Billing
+T0156,Please help: I need help finding my account settings. Thanks.,General Inquiry
+T0415,"Hi support, Where can I really download my billing invoice? Thanks.",Billing
+T0145,"Hello, Can I use the product from two devices? Reference number 1144. This started today.",General Inquiry
+T0073,I need assistance. I need help finding my account settings. Reference number 1072. This started today.,General Inquiry
+T0199,How do I close an old workspace I no longer use?,General Inquiry
+T0066,"Hi support, How do I contact support about a general question? Thanks.",General Inquiry
+T0241,"Hi support, How do I really close an old workspace I no longer use?",General Inquiry
+T0034,"Hi support, How do I close an old workspace I no longer use? This started today.",General Inquiry
+T0196,"Hello, How do I really change my notification preferences? Please advise.",General Inquiry
+T0218,"Hello, What countries is the service available in?",General Inquiry
+T0463,Password reset link opens a blank page.,Technical Issue
+T0426,How do I request a refund for my latest payment? Reference number 1024.,Billing
+T0174,How do I update the name on my profile? Please advise.,General Inquiry
+T0130,I need assistance. I need help finding my account settings. Reference number 1129. Can someone help me?,General Inquiry
+T0295,"Hi support, What countries is the service available in?",General Inquiry
+T0310,Can I change the email used for normal notifications? Reference number 1309.,General Inquiry
+T0344,I need help finding my account settings.,General Inquiry
+T0051,How do I change my notification preferences? Reference number 1050.,General Inquiry
+T0220,How can I export a copy of my profile information? I am using the web app.,General Inquiry
+T0100,What countries is the service available in? Can someone help me?,General Inquiry
+T0167,How do I change my notification preferences? Reference number 1166.,General Inquiry
+T0385,How do I change my notification preferences? I am using the web app.,General Inquiry
+T0151,How do I change my notification preferences? Thanks.,General Inquiry
+T0215,What countries is the service available in? This started today.,General Inquiry
+T0092,I need assistance. Can I use the product from two devices?,General Inquiry
+T0285,Can I really change the email used for normal notifications?,General Inquiry
+T0217,Where do I see my current subscription details?,General Inquiry
+T0440,I was charged twice for the same monthly plan.,Billing
+T0117,"Hello, I need help finding my account settings.",General Inquiry
+T0133,Please help: How do I change my notification preferences? Reference number 1132. This started today.,General Inquiry
+T0028,"Hello, How do I update the name on my profile? This started today.",General Inquiry
+T0429,How do I request a refund for my latest payment? This started today.,Billing
+T0086,Please help: Can I use the product from two devices? This started today.,General Inquiry
+T0375,Can you explain what is included in the basic plan? Can someone help me?,General Inquiry
+T0076,"Hello, Where do I really see my current subscription details? Please advise.",General Inquiry
+T0161,Where can I find the documentation for my account?,General Inquiry
+T0010,What countries is the service available in? Please advise.,General Inquiry
+T0469,The dashboard keeps loading forever and never opens.,Technical Issue
+T0216,How can I export a copy of my profile information? Reference number 1215. Please advise.,General Inquiry
+T0188,Can I change the email used for normal notifications? This started today.,General Inquiry
+T0087,Where do I see my current subscription details? Reference number 1086. Thanks.,General Inquiry
+T0210,"Hi support, Where can I really find the documentation for my account? Thanks.",General Inquiry
+T0222,"Hi support, How do I change the notification preferences? This started today.",General Inquiry
+T0007,"Hi support, Can you explain what is included in the basic plan? Reference number 1006.",General Inquiry
+T0025,I need assistance. How do I close an old workspace I no longer use? Please advise.,General Inquiry
+T0444,The app crashes every time I open the settings page.,Technical Issue
+T0093,How do I really contact support about a general question? I am using the web app.,General Inquiry
+T0306,How do I contact support about a general question? Please advise.,General Inquiry
+T0225,Please help: I need help finding my account settings. Thanks.,General Inquiry
+T0142,How do I really close an old workspace I no longer use?,General Inquiry
+T0261,Quick question — How do I close an old workspace I no longer use? Thanks.,Technical Issue
+T0356,Can you explain what is included in the basic plan? Reference number 1355. Can someone help me?,General Inquiry
+T0011,"Hi support, How do I close an old workspace I no longer use? Reference number 1010. Can someone help me?",General Inquiry
+T0312,Quick question — What countries is the service available in?,General Inquiry
+T0043,I need assistance. Where do I really see my current subscription details? Please advise.,General Inquiry
+T0421,How do I request a refund for my latest payment? Reference number 1019.,Billing
+T0386,Quick question — Can I really change the email used for normal notifications?,General Inquiry
+T0470,Our API requests time out intermittently.,Technical Issue
+T0050,How do I change my notification preferences? This started today.,General Inquiry
+T0184,"Hi support, How do I close an old workspace I no longer use? This started today.",General Inquiry
+T0417,Please explain the tax line on the invoice. Thanks.,Billing
+T0372,Where can I find the documentation for my account? This started today.,General Inquiry
+T0054,"Hi support, Can I use the product from two devices? Thanks.",General Inquiry
+T0124,How do I really change my notification preferences?,General Inquiry
+T0205,"Hi support, Can you explain what is included in the basic plan? Please advise.",General Inquiry
+T0337,"Hi support, How do I change the notification preferences? I am using the web app.",General Inquiry
+T0423,"Hello, I upgraded yesterday and the billing total looks wrong. This started today.",Billing
+T0207,I need help finding my account settings.,General Inquiry
+T0157,Quick question — How do I contact support about a general question? Reference number 1156.,General Inquiry
+T0202,I need assistance. I need help finding my account settings. I am using the web app.,General Inquiry
+T0419,Where can I download my billing invoice?,Billing
+T0193,I need assistance. Where do I see my current subscription details? Reference number 1192.,General Inquiry
+T0122,Can I change the email used for normal notifications? Reference number 1121. I am using the web app.,General Inquiry
+T0048,I need assistance. Where can I find the documentation for my account?,General Inquiry
+T0278,Quick question — Can I use the product from two devices? Reference number 1277. Can someone help me?,General Inquiry
+T0499,I see an unrecognized login from a device I do not own.,Security / Fraud
+T0039,I need assistance. How do I contact support about a general question? Can someone help me?,General Inquiry
+T0325,Please help: Can you explain what is included in the basic plan?,General Inquiry
+T0477,"Hi support, I would like an option to schedule reports weekly. I am using the web app.",Feature Request
+T0473,"Hi support, Please add dark mode to the dashboard.",Feature Request
+T0135,Where do I see my current subscription details? Reference number 1134.,General Inquiry
+T0201,Quick question — How do I close an old workspace I no longer use? Reference number 1200. Can someone help me?,General Inquiry
+T0238,Can I really use the product from two devices?,General Inquiry
+T0457,Quick question — The dashboard keeps loading forever and never opens.,Technical Issue
+T0296,"Hi support, Can you explain what is included in the basic plan? Thanks.",General Inquiry
+T0150,"Hi support, How do I close an old workspace I no longer use? Thanks.",General Inquiry
+T0442,Please help: Password reset link opens a blank page. I am using the web app.,Technical Issue
+T0341,Where can I find the documentation for my account? Reference number 1340. Thanks.,General Inquiry
+T0485,Please help: Please support custom roles and permissions. This started today.,Feature Request
+T0250,What countries is the service available in? Reference number 1249. This started today.,General Inquiry
+T0461,Please help: Our API requests time out intermittently. Reference number 1019.,Technical Issue
+T0314,Where can I find the documentation for the account? This started today.,General Inquiry
+T0298,"Hello, Can I change the email used for normal notifications? Reference number 1297.",General Inquiry
+T0057,Please help: How can I really export a copy of my profile information? Please advise.,General Inquiry
+T0322,Where do I see my current subscription details? Thanks.,General Inquiry
+T0037,Can I change the email used for normal notifications? Can someone help me?,General Inquiry
+T0078,I really need help finding my account settings.,General Inquiry
+T0311,"Hello, What countries is the service available in? Reference number 1310.",General Inquiry
+T0083,How do I change the notification preferences?,General Inquiry
+T0471,"Hi support, I cannot log in even though my password is correct. Reference number 1029.",Technical Issue
+T0164,Can you explain what is included in the basic plan? Please advise.,General Inquiry
+T0315,"Hi support, How do I contact support about a general question?",General Inquiry
+T0401,I need assistance. Can you explain what is included in the basic plan?,General Inquiry
+T0373,I need help finding my account settings. Reference number 1372. This started today.,General Inquiry
+T0454,Quick question — The API returns a 500 error for requests that worked yesterday. Can someone help me?,Technical Issue
+T0129,Quick question — How do I change the notification preferences?,General Inquiry
+T0036,Please help: What countries is the service available in? Thanks.,General Inquiry
+T0015,"Hello, How do I change my notification preferences?",General Inquiry
+T0433,Please explain the tax line on my invoice. This started today.,Billing
+T0232,Quick question — How do I update the name on the profile? Please advise.,General Inquiry
+T0277,I need assistance. Can I use the product from two devices?,General Inquiry
+T0307,Where do I see my current subscription details?,General Inquiry
+T0403,"Hello, My payment failed when renewing my subscription.",Billing
+T0273,"Hello, How can I export a copy of my profile information? Please advise.",General Inquiry
+T0465,The dashboard keeps loading forever and never opens. Reference number 1023. Can someone help me?,Technical Issue
+T0013,How do I really contact support about a general question? Can someone help me?,General Inquiry
+T0340,Please help: Can you explain what is included in the basic plan? Reference number 1339. I am using the web app.,General Inquiry
+T0154,"Hello, How do I really contact support about a general question?",General Inquiry
+T0230,Please help: How can I really export a copy of my profile information? This started today.,General Inquiry
+T0191,"Hi support, Can you explain what is included in the basic plan? Please advise.",General Inquiry
+T0377,I really need help finding my account settings. I am using the web app.,General Inquiry
+T0427,My payment failed when renewing the subscription.,Billing
+T0247,"Hello, How can I export a copy of my profile information? Can someone help me?",General Inquiry
+T0053,How can I export a copy of my profile information? Reference number 1052.,General Inquiry
+T0062,"Hi support, Can you explain what is included in the basic plan? Reference number 1061. Thanks.",General Inquiry
+T0378,Can I really change the email used for normal notifications? I am using the web app.,General Inquiry
+T0268,Can you explain what is included in the basic plan? This started today.,General Inquiry
+T0266,Quick question — Can I change the email used for normal notifications?,General Inquiry
+T0224,"Hi support, Can I use the product from two devices? I am using the web app.",General Inquiry
+T0406,My payment failed when renewing my subscription.,Billing
+T0292,Can you explain what is included in the basic plan? Thanks.,General Inquiry
+T0351,What countries is the service available in? I am using the web app.,Billing
+T0339,"Hello, How do I update the name on my profile? Reference number 1338.",General Inquiry
+T0455,Please help: The API really returns a 500 error for requests that worked yesterday.,Technical Issue
+T0290,Please help: How do I really contact support about a general question? Can someone help me?,General Inquiry
+T0382,Please help: Can you explain what is included in the basic plan? This started today.,General Inquiry
+T0118,"Hello, How do I change the notification preferences? I am using the web app.",General Inquiry
+T0064,How do I close an old workspace I no longer use?,General Inquiry
+T0059,"Hello, How do I update the name on my profile? Thanks.",General Inquiry
+T0231,"Hello, I need help finding my account settings. Reference number 1230.",General Inquiry
+T0350,"Hello, Where do I see my current subscription details? I am using the web app.",General Inquiry
+T0255,Quick question — Can I use the product from two devices?,General Inquiry
+T0363,How do I really contact support about a general question?,General Inquiry
+T0321,"Hello, I need help finding my account settings. I am using the web app.",General Inquiry
+T0353,Please help: How do I really contact support about a general question? Can someone help me?,General Inquiry
+T0392,Where do I really see my current subscription details?,General Inquiry
+T0300,"Hi support, How do I close an old workspace I no longer use? Please advise.",General Inquiry
+T0323,Quick question — How do I really update the name on my profile? Please advise.,General Inquiry
+T0194,I need help finding my account settings.,General Inquiry
+T0001,"Hello, How do I update the name on the profile? I am using the web app.",General Inquiry
+T0437,Quick question — Where can I download my billing invoice? Reference number 1035. I am using the web app.,Billing
+T0236,How do I change my notification preferences? Reference number 1235. Thanks.,General Inquiry
+T0033,Quick question — How can I really export a copy of my profile information?,General Inquiry
+T0490,Could the API expose usage analytics by workspace?,Feature Request
+T0101,Quick question — What countries is the service available in?,General Inquiry
+T0138,"Hi support, What countries is the service available in?",General Inquiry
+T0413,How do I request a refund for my latest payment? Reference number 1011.,Billing
+T0397,"Hello, How do I close an old workspace I no longer use? This started today.",General Inquiry
+T0348,"Hello, How can I export a copy of the profile information?",General Inquiry
+T0500,My account was hacked and the email was changed without me. Reference number 1003.,Security / Fraud
+T0317,"Hi support, I need help finding my account settings. Please advise.",General Inquiry
+T0283,"Hello, Can I change the email used for normal notifications?",General Inquiry
+T0360,"Hi support, What countries is the service available in? Can someone help me?",General Inquiry
+T0175,I need assistance. How can I really export a copy of my profile information? Please advise.,General Inquiry
+T0021,I need assistance. How do I update the name on the profile?,General Inquiry
+T0228,Quick question — Where do I see the current subscription details?,General Inquiry
+T0097,How do I update the name on my profile? Reference number 1096. I am using the web app.,General Inquiry
+T0223,Quick question — Can I change the email used for normal notifications? Reference number 1222. Can someone help me?,General Inquiry
+T0115,Can I change the email used for normal notifications? Reference number 1114.,General Inquiry
+T0098,I need assistance. Can I change the email used for normal notifications? Please advise.,General Inquiry
+T0488,Could the API expose usage analytics by workspace? Please advise.,Feature Request
+T0491,Quick question — I want a way to pin favorite projects.,Feature Request
+T0108,I need assistance. What countries is the service available in? Reference number 1107. Can someone help me?,General Inquiry
+T0407,I need assistance. I really upgraded yesterday and the billing total looks wrong. Can someone help me?,Billing
+T0187,"Hi support, How do I contact support about a general question?",Technical Issue
+T0400,"Hi support, Where can I find the documentation for my account? Please advise.",General Inquiry
+T0443,"Hello, The dashboard keeps loading forever and never opens. I am using the web app.",Technical Issue
+T0035,"Hello, Can I use the product from two devices? I am using the web app.",General Inquiry
+T0398,Please help: How do I update the name on the profile?,General Inquiry
+T0391,Quick question — Where can I really find the documentation for my account? Please advise.,General Inquiry
+T0105,How can I export a copy of my profile information? Can someone help me?,General Inquiry
+T0074,Quick question — Can I change the email used for normal notifications? Can someone help me?,General Inquiry
+T0009,"Hello, Where can I find the documentation for my account? Reference number 1008. Can someone help me?",General Inquiry
+T0320,"Hello, What countries is the service available in?",General Inquiry
+T0249,"Hi support, What countries is the service available in? Please advise.",General Inquiry
+T0018,"Hello, How do I really contact support about a general question? I am using the web app.",General Inquiry
+T0425,Where can I download the billing invoice?,Billing
+T0364,Where do I really see my current subscription details? Thanks.,General Inquiry
+T0016,Quick question — Can I change the email used for normal notifications? This started today.,General Inquiry
+T0438,Quick question — Please explain the tax line on my invoice. Can someone help me?,Billing
+T0017,What countries is the service available in? Please advise.,General Inquiry
+T0180,I need assistance. What countries is the service available in? This started today.,General Inquiry
+T0089,How do I contact support about a general question? This started today.,General Inquiry
+T0109,How do I contact support about a general question? Can someone help me?,General Inquiry
+T0024,Can you explain what is included in the basic plan? This started today.,General Inquiry
+T0038,I really need help finding my account settings. Thanks.,General Inquiry
+T0297,Please help: How do I close an old workspace I no longer use? Reference number 1296. Can someone help me?,General Inquiry
+T0002,I need assistance. Can you explain what is included in the basic plan? Can someone help me?,General Inquiry
+T0131,Quick question — How do I change the notification preferences?,General Inquiry
+T0460,Quick question — Our API requests time out intermittently. Thanks.,Feature Request
+T0012,Where can I find the documentation for my account? Please advise.,General Inquiry
+T0432,"Hi support, How do I request a refund for my latest payment? Reference number 1030.",Billing
+T0237,How do I close an old workspace I no longer use? Reference number 1236.,General Inquiry
+T0030,How can I export a copy of my profile information?,General Inquiry
+T0234,What countries is the service available in?,General Inquiry
+T0430,My payment failed when renewing my subscription. Can someone help me?,Billing
+T0263,I really need help finding my account settings.,General Inquiry
+T0068,Please help: How do I update the name on my profile? Can someone help me?,General Inquiry
+T0303,How do I close an old workspace I no longer use? Reference number 1302. Can someone help me?,General Inquiry
+T0029,Please help: Can I use the product from two devices? Reference number 1028. Can someone help me?,General Inquiry
+T0293,Quick question — Can you explain what is included in the basic plan? Please advise.,General Inquiry
+T0262,I need help finding my account settings. Thanks.,General Inquiry
+T0047,I need assistance. How do I update the name on my profile? Thanks.,General Inquiry
+T0474,Can you add Slack notifications for completed jobs? Thanks.,Feature Request
+T0106,How do I really contact support about a general question? Please advise.,General Inquiry
+T0060,"Hello, How do I really change my notification preferences?",General Inquiry
+T0447,The mobile application freezes after I tap sign in. Can someone help me?,Technical Issue
+T0267,Please help: Where can I find the documentation for the account?,General Inquiry
+T0342,How do I update the name on my profile? Reference number 1341. Can someone help me?,General Inquiry
+T0085,Quick question — How do I update the name on my profile?,General Inquiry
+T0077,Please help: What countries is the service available in? I am using the web app.,General Inquiry
+T0275,Can I use the product from two devices? Can someone help me?,General Inquiry
+T0441,"Hello, Where can I download the billing invoice? This started today.",Billing
+T0365,Where can I find the documentation for the account? Can someone help me?,General Inquiry
+T0281,Please help: How can I export a copy of my profile information? Reference number 1280.,General Inquiry
+T0319,Please help: Can I use the product from two devices? Reference number 1318. I am using the web app.,General Inquiry
+T0475,"Hello, I really would like an option to schedule reports weekly. Please advise.",Feature Request
+T0289,"Hi support, How do I update the name on the profile? I am using the web app.",General Inquiry
+T0040,Where can I find the documentation for my account? This started today.,General Inquiry
+T0186,Please help: Can I use the product from two devices? Reference number 1185. Can someone help me?,General Inquiry
+T0271,Where can I find the documentation for my account? Reference number 1270. Can someone help me?,General Inquiry
+T0468,The dashboard keeps loading forever and never opens.,Technical Issue
+T0270,Please help: I need help finding my account settings. Reference number 1269. Please advise.,General Inquiry
+T0042,Quick question — Where do I see my current subscription details?,General Inquiry
+T0486,Please support custom roles and permissions. This started today.,Feature Request
+T0112,I need assistance. How can I export a copy of my profile information? Reference number 1111. This started today.,General Inquiry
+T0439,Please help: I was charged twice for the same monthly plan. Reference number 1037. This started today.,Billing
+T0416,I need assistance. My payment failed when renewing the subscription. Please advise.,Billing
+T0410,Where can I download my billing invoice?,Billing
+T0213,Please help: How do I contact support about a general question? Reference number 1212.,General Inquiry
+T0192,"Hello, How do I change my notification preferences?",General Inquiry
+T0389,Quick question — How do I update the name on my profile? Reference number 1388.,General Inquiry
+T0079,Quick question — How do I contact support about a general question? Thanks.,General Inquiry
+T0446,"Hello, I receive an error when I try to upload a file. Reference number 1004.",Technical Issue
+T0450,Please help: The mobile application freezes after I tap sign in. Thanks.,Technical Issue
+T0113,Quick question — How can I export a copy of my profile information? Thanks.,General Inquiry
+T0114,Quick question — I really need help finding my account settings.,General Inquiry
+T0189,"Hi support, I need help finding my account settings. Reference number 1188. Can someone help me?",General Inquiry
+T0352,"Hello, Can you explain what is included in the basic plan? I am using the web app.",General Inquiry
+T0318,Where can I find the documentation for my account? I am using the web app.,General Inquiry
+T0160,"Hi support, What countries is the service available in?",General Inquiry
+T0258,How do I close an old workspace I no longer use?,General Inquiry
+T0345,"Hi support, What countries is the service available in?",General Inquiry
+T0082,Quick question — I need help finding my account settings. I am using the web app.,General Inquiry
+T0158,I need assistance. Where can I find the documentation for my account? I am using the web app.,General Inquiry
+T0239,"Hi support, Can you explain what is included in the basic plan?",General Inquiry
+T0061,Can I really change the email used for normal notifications?,General Inquiry
+T0032,Quick question — Can I use the product from two devices? Can someone help me?,Feature Request
+T0493,"Hi support, Please support custom roles and permissions. Reference number 1021. This started today.",Feature Request
+T0185,Quick question — How do I update the name on my profile? Please advise.,General Inquiry
+T0436,I upgraded yesterday and the billing total looks wrong. Can someone help me?,Billing
+T0006,I need assistance. Can I change the email used for normal notifications? Please advise.,General Inquiry
+T0393,"Hello, How do I change my notification preferences? Reference number 1392.",General Inquiry
+T0299,"Hello, Can I change the email used for normal notifications? I am using the web app.",General Inquiry
+T0155,Quick question — What countries is the service available in? Can someone help me?,General Inquiry
+T0169,Please help: Can I really change the email used for normal notifications?,General Inquiry
+T0137,"Hi support, How do I contact support about a general question? Reference number 1136.",General Inquiry
+T0229,Can I really change the email used for normal notifications?,Feature Request
+T0121,How can I export a copy of my profile information? I am using the web app.,General Inquiry
+T0197,"Hello, Can you explain what is included in the basic plan? This started today.",General Inquiry
+T0134,I need assistance. Where can I find the documentation for my account? Reference number 1133.,General Inquiry
+T0004,I need assistance. How do I change my notification preferences? Thanks.,General Inquiry
+T0128,Can you explain what is included in the basic plan? Reference number 1127.,General Inquiry
+T0166,How do I change my notification preferences? Please advise.,General Inquiry
+T0405,"Hi support, The invoice amount does not match what I really expected. Please advise.",Billing
+T0072,I really need help finding my account settings.,General Inquiry
+T0095,Please help: How do I close an old workspace I no longer use?,General Inquiry
+T0049,"Hello, Where do I really see my current subscription details? Please advise.",General Inquiry
+T0206,Where can I find the documentation for my account? Reference number 1205. Please advise.,General Inquiry
+T0045,Where can I really find the documentation for my account? I am using the web app.,General Inquiry
+T0168,How do I update the name on my profile? Reference number 1167.,General Inquiry
+T0264,I need assistance. Can I really use the product from two devices? Please advise.,General Inquiry
+T0219,"Hello, How can I export a copy of my profile information? Thanks.",Technical Issue
+T0208,Where can I find the documentation for my account? Thanks.,General Inquiry
+T0328,Can you explain what is included in the basic plan? Please advise.,General Inquiry
+T0489,I want a way to pin favorite projects.,Feature Request
+T0387,Can I change the email used for normal notifications?,General Inquiry
+T0362,How do I contact support about a general question? Thanks.,General Inquiry
+T0346,Where can I find the documentation for my account? Reference number 1345. Can someone help me?,General Inquiry
+T0376,Where do I see the current subscription details? Thanks.,General Inquiry
+T0152,"Hi support, How do I really change my notification preferences? Thanks.",General Inquiry
+T0173,I need assistance. How do I close an old workspace I no longer use? Reference number 1172.,General Inquiry
+T0008,Quick question — Can you explain what is included in the basic plan?,General Inquiry
+T0381,How do I really contact support about a general question?,General Inquiry
+T0496,I really would like an option to schedule reports weekly.,Feature Request
+T0332,How do I contact support about a general question? Reference number 1331.,General Inquiry
+T0235,What countries is the service available in? I am using the web app.,General Inquiry
+T0084,Quick question — How do I update the name on my profile?,General Inquiry
+T0418,I need assistance. Where can I download the billing invoice? Thanks.,Billing
+T0058,How do I change my notification preferences?,General Inquiry
+T0487,Please support custom roles and permissions.,Feature Request
+T0435,I need assistance. I was charged twice for the same monthly plan. This started today.,Billing
+T0240,"Hello, Can I change the email used for normal notifications?",General Inquiry
+T0259,Quick question — How do I change my notification preferences? Reference number 1258.,General Inquiry
+T0069,Please help: Where can I find the documentation for my account? Can someone help me?,General Inquiry
+T0253,I need assistance. Can I change the email used for normal notifications? This started today.,General Inquiry
+T0269,Where do I see my current subscription details? Please advise.,General Inquiry
+T0462,The dashboard keeps loading forever and never opens. This started today.,Technical Issue
+T0329,How do I contact support about a general question? Can someone help me?,General Inquiry
+T0233,Can you explain what is included in the basic plan? Reference number 1232.,General Inquiry
+T0146,Can you explain what is included in the basic plan? Please advise.,General Inquiry
+T0172,I need assistance. How do I close an old workspace I no longer use? Reference number 1171.,General Inquiry
+T0055,How do I close an old workspace I no longer use? Can someone help me?,General Inquiry
+T0309,Can I really change the email used for normal notifications?,General Inquiry
+T0291,I need assistance. How do I really contact support about a general question? I am using the web app.,General Inquiry
+T0481,I want a way to pin favorite projects.,Feature Request
+T0005,I need assistance. How do I close an old workspace I no longer use?,General Inquiry
+T0402,"Hello, Where can I really download my billing invoice? Please advise.",Billing
+T0453,Quick question — I cannot log in even though the password is correct. I am using the web app.,Technical Issue
+T0096,I need assistance. I really need help finding my account settings. Can someone help me?,General Inquiry
+T0254,I need assistance. Can I change the email used for normal notifications?,General Inquiry
+T0204,Please help: I really need help finding my account settings. Can someone help me?,General Inquiry
+T0019,Please help: Can I change the email used for normal notifications? Reference number 1018. Please advise.,General Inquiry
+T0091,How do I update the name on the profile? I am using the web app.,General Inquiry
+T0214,"Hello, Can I change the email used for normal notifications?",General Inquiry
+T0090,Can you explain what is included in the basic plan? Please advise.,General Inquiry
+T0020,I need assistance. Can I use the product from two devices? Thanks.,General Inquiry
+T0371,I need help finding the account settings. This started today.,General Inquiry
+T0379,Please help: Can you explain what is included in the basic plan? Please advise.,General Inquiry
+T0274,"Hello, Can I change the email used for normal notifications? Please advise.",General Inquiry
+T0119,I need assistance. Can you explain what is included in the basic plan? Thanks.,General Inquiry
+T0464,Please help: Password reset link opens a blank page. Can someone help me?,Technical Issue
+T0404,I was charged twice for the same monthly plan.,Billing
+T0046,"Hello, What countries is the service available in? I am using the web app.",General Inquiry
+T0394,"Hi support, How can I export a copy of my profile information?",General Inquiry
+T0031,Quick question — Where do I see my current subscription details? Can someone help me?,General Inquiry
+T0331,"Hello, I need help finding my account settings. Reference number 1330.",General Inquiry
+T0147,What countries is the service available in?,General Inquiry
+T0165,Can I change the email used for normal notifications? Reference number 1164. Please advise.,General Inquiry
+T0451,"Hello, The API returns a 500 error for requests that worked yesterday. This started today.",Technical Issue
+T0388,Can you explain what is included in the basic plan? This started today.,General Inquiry
+T0103,Please help: How do I contact support about a general question? Thanks.,General Inquiry
+T0334,How can I export a copy of my profile information? Please advise.,General Inquiry
+T0245,Can I use the product from two devices? Reference number 1244. Thanks.,General Inquiry
+T0244,Can I use the product from two devices?,General Inquiry
+T0335,Where do I see the current subscription details? Thanks.,General Inquiry
+T0209,How do I close an old workspace I no longer use? Please advise.,General Inquiry
+T0081,Quick question — Where can I find the documentation for my account? This started today.,General Inquiry
+T0282,How do I really contact support about a general question?,General Inquiry
+T0003,How do I update the name on my profile? Can someone help me?,General Inquiry
+T0434,I upgraded yesterday and the billing total looks wrong. Please advise.,Billing
+T0480,"Hello, It would be useful to have bulk export to CSV.",Feature Request
+T0494,It would be useful to have bulk export to CSV. Thanks.,Feature Request
+T0458,"Hi support, Our API requests time out intermittently. Please advise.",Technical Issue
+T0242,Please help: Where can I find the documentation for my account? Reference number 1241. Please advise.,General Inquiry
+T0368,What countries is the service available in?,General Inquiry
+T0170,Quick question — What countries is the service available in? Please advise.,General Inquiry
+T0212,Where do I see my current subscription details? Reference number 1211. Please advise.,General Inquiry
+T0052,I need assistance. Where can I find the documentation for my account?,General Inquiry
+T0027,I need assistance. Can you explain what is included in the basic plan?,General Inquiry
+T0120,I need assistance. Can I change the email used for normal notifications? Can someone help me?,General Inquiry
+T0327,I need assistance. How can I export a copy of my profile information? Reference number 1326.,General Inquiry
+T0482,Please help: It would be useful to have bulk export to CSV.,Feature Request
+T0272,Please help: How do I change my notification preferences? Reference number 1271.,General Inquiry
+T0343,How do I contact support about a general question? Reference number 1342.,General Inquiry
+T0026,How do I contact support about a general question? Reference number 1025.,General Inquiry
+T0125,"Hi support, Where do I really see my current subscription details? Can someone help me?",General Inquiry
+T0123,Please help: Can I use the product from two devices? Can someone help me?,General Inquiry
+T0301,Can I use the product from two devices? Thanks.,General Inquiry
+T0380,"Hello, Where do I see my current subscription details? Thanks.",General Inquiry
+T0316,"Hello, How can I export a copy of the profile information?",General Inquiry
+T0056,I need assistance. How do I really change my notification preferences?,General Inquiry
+T0071,"Hi support, How do I contact support about a general question?",General Inquiry
+T0140,How do I change the notification preferences?,General Inquiry
+T0357,Can I change the email used for normal notifications? Please advise.,General Inquiry
+T0288,"Hello, Can I change the email used for normal notifications? I am using the web app.",General Inquiry
+T0139,Where do I see my current subscription details? I am using the web app.,General Inquiry
+T0276,I need assistance. Can I change the email used for normal notifications?,General Inquiry
+T0424,Quick question — My card was declined but it works elsewhere. Can someone help me?,Billing
+T0104,"Hello, How do I contact support about a general question? Reference number 1103.",General Inquiry
+T0110,Quick question — Where do I see the current subscription details?,General Inquiry
+T0472,I need assistance. It would be useful to have bulk export to CSV.,Feature Request
+T0383,How do I update the name on my profile? Reference number 1382.,General Inquiry
+T0132,Where do I see my current subscription details? This started today.,General Inquiry
+T0336,I need assistance. How can I export a copy of my profile information? Thanks.,General Inquiry
+T0227,Where can I really find the documentation for my account?,General Inquiry
+T0178,How do I close an old workspace I no longer use? Reference number 1177. Please advise.,General Inquiry
+T0041,Please help: Can I use the product from two devices? Reference number 1040. This started today.,General Inquiry
+T0366,Please help: How do I really update the name on my profile?,General Inquiry
+T0466,Quick question — Our API really requests time out intermittently. This started today.,Technical Issue
+T0022,Quick question — Where can I really find the documentation for my account?,General Inquiry
+T0149,I need help finding my account settings.,General Inquiry
+T0075,"Hi support, Can I change the email used for normal notifications? Can someone help me?",General Inquiry
+T0492,Quick question — Could the API expose usage analytics by workspace? I am using the web app.,Feature Request
+T0497,I need assistance. I see an unrecognized login from a device I do not own.,Security / Fraud
+T0177,How do I close an old workspace I no longer use?,General Inquiry
+T0420,I upgraded yesterday and the billing total looks wrong. Reference number 1018.,Billing
+T0203,Where can I find the documentation for my account? I am using the web app.,General Inquiry
+T0459,Quick question — Our API really requests time out intermittently.,Technical Issue
+T0195,Quick question — How do I contact support about a general question? Thanks.,General Inquiry
+T0279,Please help: How do I update the name on my profile? Please advise.,General Inquiry
+T0498,"Hi support, My account was hacked and the email was changed without me. I am using the web app.",Security / Fraud
+T0294,Please help: Where can I find the documentation for my account? This started today.,General Inquiry
+T0063,I need help finding my account settings. Reference number 1062. Please advise.,General Inquiry
+T0479,Please support custom roles and permissions. Reference number 1007. Please advise.,Feature Request
+T0141,How do I update the name on my profile? Reference number 1140.,General Inquiry
+T0495,"Hello, It would be useful to have bulk export to CSV.",Feature Request
+T0408,I was charged twice for the same monthly plan. Thanks.,Billing
+T0287,"Hi support, How can I export a copy of the profile information? I am using the web app.",General Inquiry
+T0179,Quick question — I really need help finding my account settings. Can someone help me?,General Inquiry
+T0246,"Hello, How do I change the notification preferences? I am using the web app.",General Inquiry
+T0163,What countries is the service available in? Reference number 1162. This started today.,General Inquiry
+T0251,I need assistance. Where do I see my current subscription details? Reference number 1250. This started today.,General Inquiry
+T0478,Please support custom roles and permissions. Can someone help me?,Feature Request
+T0354,Please help: Can I use the product from two devices? Reference number 1353.,General Inquiry
+T0107,"Hi support, How do I close an old workspace I no longer use? Reference number 1106. Thanks.",General Inquiry
+T0361,"Hello, How do I contact support about a general question?",General Inquiry
+T0148,What countries is the service available in? Reference number 1147. Please advise.,General Inquiry
+T0395,How do I change my notification preferences? Reference number 1394. Can someone help me?,General Inquiry
+T0483,"Hi support, Please add dark mode to the dashboard. This started today.",Feature Request
+T0116,I need assistance. Where do I see my current subscription details? Reference number 1115. This started today.,General Inquiry
+T0153,Please help: How do I really change my notification preferences?,Billing
+T0286,"Hello, Can I use the product from two devices?",General Inquiry
+T0143,Please help: How do I contact support about a general question? Thanks.,General Inquiry
+T0127,How do I contact support about a general question?,General Inquiry
+T0099,I need assistance. How do I change my notification preferences? I am using the web app.,General Inquiry
+T0248,Can you explain what is included in the basic plan? Thanks.,General Inquiry
+T0313,"Hello, Where can I find the documentation for my account? Can someone help me?",General Inquiry
+T0136,"Hi support, How do I change my notification preferences? Reference number 1135.",General Inquiry
+T0355,Can I use the product from two devices?,General Inquiry
+T0412,How do I request a refund for my latest payment?,Billing
+T0330,"Hi support, Can you explain what is included in the basic plan? Thanks.",General Inquiry
+T0349,I need assistance. What countries is the service available in? Can someone help me?,General Inquiry
+T0370,Where can I find the documentation for the account? Can someone help me?,General Inquiry
+T0445,The API returns a 500 error for requests that worked yesterday. Can someone help me?,Technical Issue
+T0396,How do I change my notification preferences?,General Inquiry
+T0347,I need assistance. How can I export a copy of my profile information?,General Inquiry
+T0182,Quick question — Where can I really find the documentation for my account? Please advise.,General Inquiry
+T0280,Where can I find the documentation for my account? I am using the web app.,General Inquiry

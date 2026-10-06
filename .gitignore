@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.DS_Store
+.pytest_cache/
+.streamlit/secrets.toml
+artifacts/*.joblib
+artifacts/*.pkl
+artifacts/*.bin
+artifacts/*.pt
+artifacts/*.safetensors
+# Evaluation JSON is reproducible, but generated model weights stay local.

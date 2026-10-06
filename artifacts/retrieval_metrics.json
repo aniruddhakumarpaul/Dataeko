@@ -1,0 +1,158 @@
+{
+  "retrieval_backend": "tfidf",
+  "queries": 15,
+  "mrr_at_3": 0.9666666666666667,
+  "hit_rate_at_3": 1.0,
+  "details": [
+    {
+      "query": "Where can I update my profile name?",
+      "expected": "KB-001",
+      "retrieved": [
+        "KB-001",
+        "KB-003",
+        "KB-015"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "The API keeps returning HTTP 500",
+      "expected": "KB-002",
+      "retrieved": [
+        "KB-002",
+        "KB-001",
+        "KB-003"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "The mobile application freezes when I open settings",
+      "expected": "KB-003",
+      "retrieved": [
+        "KB-003",
+        "KB-008",
+        "KB-001"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "I was billed twice for the same month",
+      "expected": "KB-004",
+      "retrieved": [
+        "KB-004",
+        "KB-014",
+        "KB-010"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "Why was my renewal card declined?",
+      "expected": "KB-005",
+      "retrieved": [
+        "KB-005",
+        "KB-012",
+        "KB-014"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "Can you add dark mode?",
+      "expected": "KB-006",
+      "retrieved": [
+        "KB-006",
+        "KB-011",
+        "KB-010"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "I cannot sign in even with the right email",
+      "expected": "KB-007",
+      "retrieved": [
+        "KB-007",
+        "KB-008",
+        "KB-001"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "My password reset link expired",
+      "expected": "KB-008",
+      "retrieved": [
+        "KB-008",
+        "KB-007",
+        "KB-005"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "I got a scam email asking for my OTP",
+      "expected": "KB-009",
+      "retrieved": [
+        "KB-009",
+        "KB-015",
+        "KB-008"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "Can I get a refund for the last invoice?",
+      "expected": "KB-010",
+      "retrieved": [
+        "KB-010",
+        "KB-004",
+        "KB-014"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "When will this requested feature ship?",
+      "expected": "KB-011",
+      "retrieved": [
+        "KB-006",
+        "KB-011",
+        "KB-009"
+      ],
+      "rank": 2
+    },
+    {
+      "query": "Where do I see my active plan and renewal date?",
+      "expected": "KB-012",
+      "retrieved": [
+        "KB-012",
+        "KB-015",
+        "KB-010"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "There is a login from an unknown device",
+      "expected": "KB-013",
+      "retrieved": [
+        "KB-013",
+        "KB-007",
+        "KB-015"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "There is a card charge I never made",
+      "expected": "KB-014",
+      "retrieved": [
+        "KB-014",
+        "KB-004",
+        "KB-005"
+      ],
+      "rank": 1
+    },
+    {
+      "query": "Someone changed my password and email",
+      "expected": "KB-015",
+      "retrieved": [
+        "KB-015",
+        "KB-008",
+        "KB-007"
+      ],
+      "rank": 1
+    }
+  ]
+}

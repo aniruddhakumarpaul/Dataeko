@@ -1,0 +1,21 @@
+ticket_id,text,expected_label
+S001,A charge appeared on my card that I did not make.,Security / Fraud
+S002,I clicked a link in an email and then someone asked for my OTP.,Security / Fraud
+S003,My password changed overnight and it wasn't me.,Security / Fraud
+S004,There is a login from Russia that I don't recognize.,Security / Fraud
+S005,I think someone took over my account.,Security / Fraud
+S006,The card charge says your company but I never bought anything.,Security / Fraud
+S007,An unknown device signed into my account.,Security / Fraud
+S008,I shared a verification code with someone pretending to be support.,Security / Fraud
+S009,My phone was stolen and my account is still logged in there.,Security / Fraud
+S010,I received a phishing email claiming to be from your team.,Security / Fraud
+S011,Someone changed the email on my account without permission.,Security / Fraud
+S012,My account may be compromised after I reused a password.,Security / Fraud
+S013,The invoice has a charge I don't recognize.,Security / Fraud
+S014,I was scammed by a person asking me for a login code.,Security / Fraud
+S015,I got an MFA prompt even though I wasn't logging in.,Security / Fraud
+N001,How can I reset my password?,Technical Issue
+N002,My monthly renewal payment was declined.,Billing
+N003,Please add two-factor authentication to team accounts.,Feature Request
+N004,Where can I view my account settings?,General Inquiry
+N005,The app crashes after login.,Technical Issue

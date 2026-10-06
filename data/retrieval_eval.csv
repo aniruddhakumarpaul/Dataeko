@@ -1,0 +1,16 @@
+query,expected_source_id
+"Where can I update my profile name?",KB-001
+"The API keeps returning HTTP 500",KB-002
+"The mobile application freezes when I open settings",KB-003
+"I was billed twice for the same month",KB-004
+"Why was my renewal card declined?",KB-005
+"Can you add dark mode?",KB-006
+"I cannot sign in even with the right email",KB-007
+"My password reset link expired",KB-008
+"I got a scam email asking for my OTP",KB-009
+"Can I get a refund for the last invoice?",KB-010
+"When will this requested feature ship?",KB-011
+"Where do I see my active plan and renewal date?",KB-012
+"There is a login from an unknown device",KB-013
+"There is a card charge I never made",KB-014
+"Someone changed my password and email",KB-015
