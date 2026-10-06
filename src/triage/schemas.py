@@ -19,6 +19,8 @@ class ClassificationResult:
     needs_human_review: bool
     review_reason: str | None
     safety: SafetySignal
+    model_confidence: float | None = None
+    review_reason_code: str | None = None
 
 
 @dataclass

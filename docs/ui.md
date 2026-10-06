@@ -29,9 +29,13 @@ Streamlit's developer toolbar is hidden in the support interface.
 - Examples populate the input and clear any previous result.
 - Form submission analyzes the complete input in one action.
 - Successful results persist across Streamlit reruns; saving a reply does not rerun
-  the app. Start over clears the input, example selection, and result.
-- Failed analysis preserves the message, shows a short retry instruction, and logs
-  the technical exception on the server rather than showing it to the user.
+  the app. Start over clears the input, example selection, and result, and starts a
+  fresh submission operation.
+- A required human-review ticket is committed before optional retrieval/generation.
+  If those stages fail, the ticket receipt remains visible and its optional AI state
+  is recorded as failed.
+- Failed ticket writes show no receipt; the message stays available for a safe retry.
+  A durable URL operation ID lets the retry reuse a committed ticket after refresh.
 - Security review instructions identify the next action in plain language.
 - Response abstention always requests manual handling, even when the classifier's
   own review flag is false. It never displays an unrelated article as a suggested
@@ -56,7 +60,9 @@ tested lock file. AppTest covers empty input, persisted results, manual handling
 security review, security plus abstention, example changes, reset, and failure/retry.
 Browser checks cover the actual local pipeline and desktop/mobile layouts.
 
-Validation on 2026-10-06: `python -m pytest` passed all 14 tests. The browser was
-checked at desktop and 390-pixel mobile widths with Billing, Security/Fraud, and
-out-of-domain no-answer examples. Review instructions and inline citations remain
-visible while diagnostics stay collapsed.
+Validation on 2026-10-06: `.venv\Scripts\python.exe -m pytest` passed all 104 tests,
+including AppTest coverage for refresh-restored ticket receipts, early escalation,
+and saved-ticket behavior after optional-stage failures. The earlier browser check
+covered desktop and 390-pixel mobile widths with Billing, Security/Fraud, and
+out-of-domain no-answer examples; no new live-browser visual pass was run for this
+persistence phase.

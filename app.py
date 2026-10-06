@@ -17,13 +17,17 @@ from triage.classifier import fit_classifier, save_classifier  # noqa: E402
 from triage.constants import COST_SENSITIVE_CLASS_WEIGHTS  # noqa: E402
 from triage.pipeline import TriagePipeline  # noqa: E402
 from triage.safety import audit_label_conflicts  # noqa: E402
-from triage.review import review_decision  # noqa: E402
-from triage.support_ui import clear_ticket_submission, render_raise_ticket, render_support_inbox, render_my_tickets, raise_ticket  # noqa: E402
+from triage.support_ui import (  # noqa: E402
+    clear_ticket_submission, ensure_operation_id, rotate_operation_id,
+    render_raise_ticket, render_receipt, render_support_inbox, render_my_tickets, raise_ticket,
+)
 from triage.tickets import TicketStore  # noqa: E402
 from triage.accounts import AccountService  # noqa: E402
 from triage.auth_ui import render_authentication  # noqa: E402
 from triage.mail import MailService  # noqa: E402
-from triage.review import direct_human_result  # noqa: E402
+from triage.review import (  # noqa: E402
+    direct_human_decision, review_decision, review_decision_from_classification,
+)
 
 st.set_page_config(page_title="Ticket triage", page_icon="🎫", layout="centered")
 st.set_option("client.toolbarMode", "minimal")
@@ -134,6 +138,7 @@ def choose_example() -> None:
         st.session_state["ticket_text"] = samples[selected]
         st.session_state.pop("result", None)
         clear_ticket_submission()
+        st.session_state["request_id"] = rotate_operation_id(st.query_params)
 
 
 def start_over() -> None:
@@ -141,9 +146,24 @@ def start_over() -> None:
     st.session_state["example"] = "Choose an example"
     st.session_state.pop("result", None)
     clear_ticket_submission()
+    st.session_state["request_id"] = rotate_operation_id(st.query_params)
 
 
 st.session_state.setdefault("ticket_text", "")
+request_id = ensure_operation_id(st.query_params)
+st.session_state["request_id"] = request_id
+try:
+    existing_ticket_id = store.ticket_id_for_request(principal, request_id)
+except PermissionError:
+    # A copied URL operation ID must not reveal whether another account used it.
+    existing_ticket_id = None
+    st.session_state["request_id"] = rotate_operation_id(st.query_params)
+if existing_ticket_id:
+    st.session_state.setdefault("raised_ticket", existing_ticket_id)
+    existing_ticket = store.get_ticket(principal, existing_ticket_id)
+    if existing_ticket and not st.session_state.get("analyzed_message"):
+        st.session_state["analyzed_message"] = existing_ticket["message"]
+        st.session_state["ticket_text"] = existing_ticket["message"]
 
 st.title("How can we help?")
 st.write("Check help articles or ask a support executive to contact you.")
@@ -169,29 +189,59 @@ with st.form("ticket_form"):
 
 if submitted or human_requested:
     st.session_state.pop("result", None)
-    if not (st.session_state.get("raised_ticket")
-            and ticket.strip() == st.session_state.get("analyzed_message")):
+    if st.session_state.get("raised_ticket") and ticket.strip() != st.session_state.get("analyzed_message"):
         clear_ticket_submission()
+        st.session_state["request_id"] = rotate_operation_id(st.query_params)
     if not ticket.strip():
         st.warning("Paste a customer message before analyzing.")
     else:
         st.session_state["analyzed_message"] = ticket.strip()
         try:
-            with st.spinner("Reading the message and checking help articles…"):
+            with st.spinner("Reviewing your request…"):
                 if human_requested:
-                    st.session_state["result"] = direct_human_result(ticket.strip())
+                    decision = direct_human_decision(ticket.strip())
+                    raise_ticket(
+                        store, principal, None, ticket.strip(),
+                        classification=None, decision=decision, direct_human=True,
+                    )
                     st.session_state["retrieval_backend"] = "not needed for a direct human request"
-                    raise_ticket(store, mail, principal, st.session_state["result"], ticket.strip(), direct_human=True)
                 else:
                     pipeline = load_pipeline()
-                    st.session_state["result"] = pipeline.run(ticket.strip())
+                    classification = pipeline.classify(ticket.strip())
+                    early_decision = review_decision_from_classification(classification)
+                    if early_decision.required:
+                        raise_ticket(
+                            store, principal, None, ticket.strip(),
+                            classification=classification, decision=early_decision,
+                        )
+                    result = pipeline.complete(ticket.strip(), classification)
+                    st.session_state["result"] = result
                     st.session_state["retrieval_backend"] = pipeline.retriever.backend
-                    if review_decision(st.session_state["result"]).required:
-                        raise_ticket(store, mail, principal, st.session_state["result"], ticket.strip(), direct_human=False)
+                    if st.session_state.get("raised_ticket"):
+                        store.update_ai_assistance(
+                            principal, st.session_state["raised_ticket"], result=result
+                        )
+                    else:
+                        later_decision = review_decision(result)
+                        if later_decision.required:
+                            raise_ticket(
+                                store, principal, result, ticket.strip(),
+                                decision=later_decision,
+                            )
                 st.session_state["analyzed_message"] = ticket.strip()
         except Exception:
             logging.exception("Ticket analysis failed")
-            st.error("We couldn't analyze this message. Try again in a moment.")
+            ticket_id = st.session_state.get("raised_ticket")
+            if ticket_id:
+                try:
+                    existing = store.get_ticket(principal, ticket_id)
+                    if existing and existing["ai_state"] == "pending":
+                        store.update_ai_assistance(principal, ticket_id, failed=True)
+                except Exception:
+                    logging.exception("Optional assistance state could not be updated")
+                st.error("Your support ticket is saved. We couldn't finish the automated checks, so a support engineer will review it.")
+            else:
+                st.error("We couldn't save or analyze this request. Your message is still here; please try again.")
 
 result = st.session_state.get("result")
 if result is not None:
@@ -220,9 +270,10 @@ if result is not None:
         )
 
     if not result.draft.grounded and result.draft.generation_mode != "human-request":
-        st.info(
-            "A support engineer will review it and prepare a response."
-        )
+        if st.session_state.get("raised_ticket"):
+            st.info("A support engineer will review it and prepare a response.")
+        else:
+            st.info("We couldn't find a relevant help article. Raise a support ticket to have an engineer review it.")
 
     if result.draft.grounded:
         with st.container(border=True):
@@ -282,5 +333,8 @@ if result is not None:
         )
 
     st.button("Start over", on_click=start_over)
+elif st.session_state.get("raised_ticket"):
+    render_receipt(store, mail, principal, st.session_state["raised_ticket"])
+    st.button("Start a new request", on_click=start_over)
 
 st.caption("Demo using sample tickets and help articles.")

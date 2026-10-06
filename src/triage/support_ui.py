@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from uuid import uuid4
 import streamlit as st
 from .review import ReviewDecision
@@ -8,21 +9,41 @@ from .schemas import TriageResult
 from .tickets import STATUSES, TicketStore
 
 
+_OPERATION_ID = re.compile(r"[0-9a-f]{32}")
+
+
+def ensure_operation_id(query_params) -> str:
+    """Use a URL-persisted opaque operation key, or create one before submission."""
+    value = query_params.get("operation_id", "")
+    if not isinstance(value, str) or not _OPERATION_ID.fullmatch(value):
+        value = uuid4().hex
+        query_params["operation_id"] = value
+    return value
+
+
+def rotate_operation_id(query_params) -> str:
+    value = uuid4().hex
+    query_params["operation_id"] = value
+    return value
+
+
 def clear_ticket_submission() -> None:
-    for key in ('raised_ticket', 'request_id', 'support_phone', 'support_details'):
+    for key in ('raised_ticket', 'support_phone', 'support_details'):
         st.session_state.pop(key, None)
 
 
-def raise_ticket(store, mail, principal, result, message, *, details='', phone=None, direct_human=False):
-    st.session_state.setdefault('request_id', uuid4().hex)
-    ticket_id = store.create_ticket(actor=principal, message=message, details=details,
-        phone=principal.phone if phone is None else phone, result=result, request_id=st.session_state['request_id'], direct_human=direct_human)
+def raise_ticket(store, principal, result, message, *, details='', phone=None,
+                 classification=None, decision=None, direct_human=False):
+    request_id = ensure_operation_id(st.query_params)
+    st.session_state['request_id'] = request_id
+    ticket_id = store.create_ticket(
+        actor=principal, message=message, details=details,
+        phone=principal.phone if phone is None else phone,
+        result=result, classification=classification, decision=decision,
+        request_id=request_id, direct_human=direct_human,
+    )
     st.session_state['raised_ticket'] = ticket_id
-    try:
-        mail.deliver_pending(event_key=f'ticket:{ticket_id}:0')
-        mail.deliver_pending(event_key=f'staff-ticket:{ticket_id}')
-    except Exception:
-        logging.exception('Ticket saved; email delivery must be retried')
+    # The transactional outbox is delivered independently by the retry worker.
     return ticket_id
 
 
@@ -48,8 +69,10 @@ def render_receipt(store, mail, principal, ticket_id):
     delivery = mail.event_status(f"ticket:{ticket_id}:{ticket['version']}")
     if delivery == 'Sent':
         st.caption('A ticket update was delivered by the configured email service.')
+    elif delivery == 'Failed':
+        st.warning('Your ticket is saved. Email delivery is temporarily delayed and will be retried.')
     else:
-        st.warning('Your ticket is saved. Its email update is queued for delivery; support can retry it.')
+        st.warning('Your ticket is saved. Its email update is waiting for delivery.')
     if ticket['resolution']:
         st.write('Support response')
         st.text(ticket['resolution'])
@@ -69,7 +92,7 @@ def render_raise_ticket(store: TicketStore, mail, principal, result: TriageResul
             send = st.form_submit_button('Raise ticket and request a person', type='primary', width='stretch')
         if send:
             try:
-                raise_ticket(store, mail, principal, result, message, details=details, phone=phone, direct_human=True)
+                raise_ticket(store, principal, result, message, details=details, phone=phone, direct_human=True)
             except ValueError as error:
                 st.error(str(error))
             except Exception:
@@ -158,7 +181,7 @@ def render_support_inbox(store, mail, principal, accounts):
         return
     ticket = snapshot
     st.subheader(ticket['id'])
-    st.write(f"**{ticket['category']} · {ticket['priority']} priority · {ticket['status']}**")
+    st.write(f"**{ticket['category'] or 'Human support'} · {ticket['priority']} priority · {ticket['status']}**")
     st.write(ticket['review_reason'])
     st.caption(f"Raised: {ticket['created_at']} · Last updated: {ticket['updated_at']}")
     st.write('Customer message')

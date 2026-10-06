@@ -47,8 +47,8 @@ actions. See `docs/ui.md` for the interaction specification.
 
 The earlier no-answer presentation inconsistency is resolved at the UI layer:
 response abstention always asks for manual handling. Backend routing and grounding
-findings remain separate. The published implementation now exists in commit
-`aa3c7f3` (`gg`); the earlier placeholder-only state describes the time of import.
+findings remain separate. The earlier placeholder-only state describes the time of
+import.
 
 ## 2026-10-06: Employee accounts and operational human handoff
 
@@ -108,3 +108,19 @@ against the hashed server-side session on each page load, and clear/revoke it on
 sign-out. Set the Secure cookie flag when the app URL uses HTTPS. The local prototype
 uses a browser-side cookie component; production deployment should use an
 HttpOnly cookie set by the server.
+
+## 2026-10-06: Persist early human-review tickets
+
+Requests that already require a person now persist a ticket before optional retrieval
+and generation. The direct-human path does not load the classifier or retrieval stack.
+`review_decision_from_classification` is the shared early policy; the final evidence
+decision extends it without replacing an existing handoff. A later model failure
+marks assistance failed while preserving the Open ticket and its original priority.
+
+The authenticated customer URL stores an opaque random operation ID, while SQLite's
+unique request ID and tenant/owner checks enforce idempotency. The same ID returns the
+same ticket across refresh and concurrent submits; Start over rotates it, allowing a
+new incident with identical text. Ticket schema migration preserves existing tickets
+and events, makes unavailable classification/draft fields nullable, and records raw
+classifier confidence and ticket creation reason separately. SMTP remains an
+after-commit outbox operation and cannot change ticket-creation success.

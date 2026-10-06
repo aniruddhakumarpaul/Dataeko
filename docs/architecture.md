@@ -8,26 +8,26 @@ Accounts, Employee IDs, support tickets, and email delivery are documented in
 
 ```mermaid
 flowchart LR
-    A[Incoming ticket] --> B[Safety signal detector]
-    A --> C[TF-IDF classifier]
-    B --> D{Protected Security/Fraud gate}
-    C --> D
-    D -->|security / low confidence| E[Human review flag]
-    D --> F[Category + confidence]
-
-    A --> G[Hybrid retrieval]
-    H[Markdown knowledge base] --> G
-    G --> I{Relevance threshold}
-    I -->|below threshold| J[Abstain: no invented answer]
-    I -->|relevant evidence| K[Grounded response generator]
-    K --> L[Exact source-evidence validator]
-    L -->|valid| M[Suggested response + inline KB citations]
-    L -->|invalid| N[Extractive grounded fallback]
-    A --> O[Signed-in employee and tenant]
-    O --> P{Review or confidence below 90%}
-    P --> Q[Persistent support ticket and callback number]
-    Q --> R[Tenant support inbox]
+    A[Customer submission] --> O[Authenticated tenant and owner]
+    O --> H{Talk to a person?}
+    H -->|yes| V[Commit direct-human ticket and outbox]
+    V --> R[Tenant support inbox]
+    H -->|no| C[Classifier plus safety policy]
+    C --> D{Early human review required?}
+    D -->|yes| Q
+    D -->|no| G[Hybrid retrieval]
+    K[Markdown knowledge base] --> G
+    Q --> G
+    G --> I{Sufficient evidence?}
+    I -->|no, no ticket yet| Q
+    I -->|no, ticket exists| R[Tenant support inbox]
+    I -->|yes| J[Grounded draft and citation validation]
+    J --> U[Update same ticket with optional assistance]
+    U --> R
+    Q --> R
     R --> S[Staff resolution and email update]
+    O --> X[Opaque operation ID in URL]
+    X --> Q
 ```
 
 ## Engineering choices
@@ -48,3 +48,19 @@ pipeline flag, customer UI, and support queue. Requests below that threshold, se
 risks, unsupported queries, and explicit requests for a person create human-review
 tickets. Account phone numbers are passed to the tenant's support team, separately
 from model input. Ticket events and notification outbox writes are transactional.
+
+`TriagePipeline.classify` runs classification and safety policy only; the retrieval
+index is lazy and loads only when `complete` is called. The app uses the shared
+classification review decision to commit a required ticket before retrieval or
+generation. Direct-human submissions use only input validation and the deterministic
+security signal detector before ticket commit; they do not load the classifier,
+retriever, generator, or an external service. Later evidence review can create a
+ticket when none exists, or update the same ticket's optional assistance fields.
+
+Each customer submission uses a random 32-character hexadecimal operation ID in the
+URL. TicketStore validates the format and scopes lookup and idempotent creation to
+the authenticated owner and tenant. A unique SQLite request ID is authoritative;
+starting a new request rotates the key, so matching message text alone never
+deduplicates future incidents. Early ticket rows represent unavailable classifier
+and draft values as null. Raw `classifier_confidence` is distinct from rule-based
+security scores; legacy confidence values are not reinterpreted during migration.

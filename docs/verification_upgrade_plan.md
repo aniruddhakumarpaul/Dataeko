@@ -1,13 +1,15 @@
 # Support triage improvement plan
 
-Prepared on 2026-10-06. This is a proposed approach, based on the current local
-source and the supplied analysis. It does not claim that the upgrades below are
-implemented, tested, or approved for public deployment.
+Prepared on 2026-10-06. This plan is based on the local source and supplied analysis.
+The early human-ticket persistence slice is recorded as delivered below; the
+remaining evidence, evaluation, and model changes are still proposed and are not
+approved for public deployment.
 
 ## Decision
 
-Strengthen evidence handling and evaluation first, then adopt semantic models only
-when a controlled comparison demonstrates an improvement. Keep deterministic
+Freeze the evaluation baseline and persist required human handoffs before optional
+AI stages, then strengthen evidence handling and evaluation. Adopt semantic models
+only when a controlled comparison demonstrates an improvement. Keep deterministic
 Security/Fraud escalation and the customer's direct-human option independent of
 model generation.
 
@@ -291,6 +293,32 @@ Verified staff resolution triggers the existing customer email outbox.
 Acceptance includes login-refresh persistence, sign-out revocation, customer/staff
 and tenant boundaries, duplicate-submit handling, generator outages, SMTP failure,
 database-write failure, and concurrent staff resolution.
+
+### Early human-ticket persistence phase
+
+This delivery implements the ticket-persistence slice first; it does not begin the
+evidence-contract or required-fact work above. `TriagePipeline.classify` exposes the
+classifier/safety result without loading the KB. The app applies the shared review
+policy and commits a required ticket plus its notification outbox before calling
+retrieval or generation. The direct-human path commits from authenticated input and
+the deterministic safety signal only, without loading the model or retrieval stack.
+
+The browser URL carries an opaque random 128-bit operation ID. It is validated as a
+32-character lowercase hexadecimal value, persisted as the ticket's unique request
+ID, and resolved only within the authenticated tenant/owner scope. Reusing it returns
+the original ticket; **Start over** creates a new ID, so identical message text can
+raise a later incident. SQLite's immediate transaction serializes duplicate creates.
+
+Ticket persistence records explicit AI-assistance states and nullable fields instead
+of fabricated drafts. New model confidence is stored separately from security/rule
+signals. Existing ticket rows/events are preserved by the nullable-field migration;
+legacy confidence values are not reinterpreted. Ticket and outbox writes commit
+together, while the SMTP retry worker runs independently. A later evidence abstention
+reuses an early ticket or creates one with the same operation ID if none exists.
+
+The evidence contracts, required-fact matrix, new datasets, classifiers, retrieval
+ranking, generation grounding, and model/retrieval metrics remain unchanged in this
+phase. No metric improvement is claimed.
 
 ## Release gates and rollback
 

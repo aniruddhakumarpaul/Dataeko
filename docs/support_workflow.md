@@ -12,24 +12,51 @@ operators to select a tenant. Registration matches the assigned email and phone.
 The chosen support password is activated only after email OTP verification.
 Sign-in requires Employee ID, phone, password, and a fresh email OTP.
 
-Customers may analyze a message or choose **Talk to a person**, which raises a
-persisted ticket immediately without waiting for a model. Confidence strictly
-below 90% also raises a ticket automatically. Security, explicit requests for a
-person, and missing KB evidence independently require review. The user's callback
-number is available to their own tenant's support team. My tickets shows only
-requests owned by the signed-in account. Staff can see only their tenant's queue.
-Resolving a ticket requires a customer-facing response; version checks prevent
-stale updates from overwriting another agent's work. Repeating the same current
-request reuses the ticket instead of creating another record.
+Customers may analyze a message or choose **Talk to a person**. The direct-human
+action validates the message and commits its ticket and notification outbox without
+loading the classifier, retrieval index, or generator. For analyzed messages, the
+shared review policy checks Security/Fraud, confidence below 90%, explicit or
+unresolved-language review, and classifier review immediately after classification.
+If any applies, the app commits the ticket before retrieval or generation. A later
+insufficient-evidence decision creates a ticket only when one does not already
+exist. Human-required tickets are committed before optional retrieval/generation.
+
+The customer page URL carries a random 128-bit hexadecimal operation ID for the
+current submission. It contains no customer data and remains available through a
+full refresh. TicketStore validates its format and scopes lookups to the signed-in
+tenant and owner. A unique database request ID and an immediate SQLite write
+transaction make retries and concurrent submits for the same operation converge on
+one ticket. Reusing another account's ID is rejected. **Start a new request**
+rotates the ID, so the same message can represent a later incident and create a new
+ticket.
+
+Early tickets contain only fields known at that point: message, review reason,
+priority, and classifier category/raw model score when classification ran. Direct
+human tickets have no fabricated classification or confidence. Suggested reply and
+sources remain null until assistance is available; `ai_state` records `not_required`,
+`pending`, `complete`, or `failed`. Later assistance updates the same ticket and
+cannot lower Security/Fraud priority or remove the human-review flag. The schema
+migration keeps existing tickets and ticket events while making those AI fields
+nullable. The older `confidence` column may contain legacy security rule scores;
+new `classifier_confidence` stores the raw model score separately and is null where
+that value is unavailable.
+
+The user's callback number is available to their own tenant's support team. My
+tickets shows only requests owned by the signed-in account. Staff can see only
+their tenant's queue. Resolving a ticket requires a customer-facing response;
+version checks prevent stale updates from overwriting another agent's work.
 
 Rahul, Priya, and Amit are explicitly fictional demo executives. A friendly
 introduction records the requested callback preference of within two minutes;
 it does not claim that a real call has been scheduled or placed.
 
 Ticket creation, staff handoff, and status updates enqueue email records in the
-same SQLite transaction as the ticket change. SMTP sends after commit. Failure
-leaves the ticket saved and delivery retryable. The UI distinguishes queued email
-from SMTP acceptance. `scripts/send_pending_mail.py --watch` retries every 30
+same SQLite transaction as the ticket change. SMTP sends only after commit. Failure
+leaves the ticket saved and the outbox entry retryable; email delivery failure does
+not turn a committed ticket into a failed submission. A database failure produces
+no ticket receipt and no committed notification. The UI distinguishes queued email
+from SMTP acceptance; ticket receipt rendering does not wait for SMTP. The independent
+`scripts/send_pending_mail.py --watch` worker retries every 30
 seconds, excludes expired OTPs, and recovers stale delivery claims. A crash after
 SMTP acceptance but before recording it can duplicate an email; delivery is not
 claimed to be exactly once.

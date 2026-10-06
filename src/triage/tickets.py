@@ -12,11 +12,12 @@ import time
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from .review import review_decision
-from .schemas import TriageResult
+from .review import ReviewDecision, review_decision, review_decision_from_classification
+from .schemas import ClassificationResult, TriageResult
 from .mail import enqueue_mail
 
 STATUSES = ("Open", "In progress", "Resolved")
+CREATION_REASONS = {"explicit_human", "security_review", "low_confidence", "classifier_review", "insufficient_evidence", "legacy"}
 
 
 def normalize_phone(phone: str, required: bool) -> str:
@@ -43,35 +44,107 @@ class TicketStore:
     def __init__(self, path: str | Path):
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as db:
-            db.executescript("""
+        self._initialize_schema()
+
+    def _initialize_schema(self) -> None:
+        """Migrate the legacy NOT NULL AI fields to explicit nullable assistance state."""
+        db = sqlite3.connect(self.path, timeout=15)
+        db.row_factory = sqlite3.Row
+        db.execute("PRAGMA foreign_keys = OFF")
+        try:
+            db.execute("BEGIN IMMEDIATE")
+            db.execute("""
                 CREATE TABLE IF NOT EXISTS tickets (
                     id TEXT PRIMARY KEY, request_id TEXT UNIQUE NOT NULL,
                     message TEXT NOT NULL, details TEXT NOT NULL,
                     customer_name TEXT NOT NULL, phone TEXT NOT NULL,
-                    category TEXT NOT NULL, confidence REAL NOT NULL,
+                    category TEXT, confidence REAL,
                     priority TEXT NOT NULL, review_reason TEXT NOT NULL,
                     needs_human_review INTEGER NOT NULL,
-                    suggested_reply TEXT NOT NULL, sources TEXT NOT NULL,
+                    suggested_reply TEXT, sources TEXT,
                     tracking_hash TEXT NOT NULL,
                     status TEXT NOT NULL CHECK(status IN ('Open','In progress','Resolved')),
                     assigned_to TEXT NOT NULL DEFAULT '', resolution TEXT NOT NULL DEFAULT '',
                     created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
-                    version INTEGER NOT NULL DEFAULT 0
-                );
+                    version INTEGER NOT NULL DEFAULT 0,
+                    tenant_id TEXT NOT NULL DEFAULT '', owner_id TEXT NOT NULL DEFAULT '',
+                    callback_requested INTEGER NOT NULL DEFAULT 0,
+                    classifier_confidence REAL,
+                    creation_reason TEXT NOT NULL DEFAULT 'legacy',
+                    ai_state TEXT NOT NULL DEFAULT 'complete'
+                        CHECK(ai_state IN ('not_required','pending','complete','failed'))
+                )
+            """)
+            db.execute("""
                 CREATE TABLE IF NOT EXISTS ticket_events (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     ticket_id TEXT NOT NULL REFERENCES tickets(id),
                     actor TEXT NOT NULL, status TEXT NOT NULL, occurred_at TEXT NOT NULL
-                );
+                )
             """)
             columns = {row["name"] for row in db.execute("PRAGMA table_info(tickets)")}
-            for name in ("tenant_id", "owner_id"):
-                if name not in columns:
-                    db.execute(f"ALTER TABLE tickets ADD COLUMN {name} TEXT NOT NULL DEFAULT ''")
+            if "tenant_id" not in columns:
+                db.execute("ALTER TABLE tickets ADD COLUMN tenant_id TEXT NOT NULL DEFAULT ''")
+            if "owner_id" not in columns:
+                db.execute("ALTER TABLE tickets ADD COLUMN owner_id TEXT NOT NULL DEFAULT ''")
             if "callback_requested" not in columns:
                 db.execute("ALTER TABLE tickets ADD COLUMN callback_requested INTEGER NOT NULL DEFAULT 0")
+            for name, definition in (
+                ("classifier_confidence", "REAL"),
+                ("creation_reason", "TEXT NOT NULL DEFAULT 'legacy'"),
+                ("ai_state", "TEXT NOT NULL DEFAULT 'complete'"),
+            ):
+                if name not in columns:
+                    db.execute(f"ALTER TABLE tickets ADD COLUMN {name} {definition}")
+
+            info = {row["name"]: row for row in db.execute("PRAGMA table_info(tickets)")}
+            nullable_fields = ("category", "confidence", "suggested_reply", "sources")
+            if any(info[name]["notnull"] for name in nullable_fields):
+                db.execute("""
+                    CREATE TABLE tickets_migrated (
+                        id TEXT PRIMARY KEY, request_id TEXT UNIQUE NOT NULL,
+                        message TEXT NOT NULL, details TEXT NOT NULL,
+                        customer_name TEXT NOT NULL, phone TEXT NOT NULL,
+                        category TEXT, confidence REAL,
+                        priority TEXT NOT NULL, review_reason TEXT NOT NULL,
+                        needs_human_review INTEGER NOT NULL,
+                        suggested_reply TEXT, sources TEXT,
+                        tracking_hash TEXT NOT NULL,
+                        status TEXT NOT NULL CHECK(status IN ('Open','In progress','Resolved')),
+                        assigned_to TEXT NOT NULL DEFAULT '', resolution TEXT NOT NULL DEFAULT '',
+                        created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+                        version INTEGER NOT NULL DEFAULT 0,
+                        tenant_id TEXT NOT NULL DEFAULT '', owner_id TEXT NOT NULL DEFAULT '',
+                        callback_requested INTEGER NOT NULL DEFAULT 0,
+                        classifier_confidence REAL,
+                        creation_reason TEXT NOT NULL DEFAULT 'legacy',
+                        ai_state TEXT NOT NULL DEFAULT 'complete'
+                            CHECK(ai_state IN ('not_required','pending','complete','failed'))
+                    )
+                """)
+                fields = (
+                    "id", "request_id", "message", "details", "customer_name", "phone",
+                    "category", "confidence", "priority", "review_reason", "needs_human_review",
+                    "suggested_reply", "sources", "tracking_hash", "status", "assigned_to",
+                    "resolution", "created_at", "updated_at", "version", "tenant_id", "owner_id",
+                    "callback_requested", "classifier_confidence", "creation_reason", "ai_state",
+                )
+                db.execute(
+                    f"INSERT INTO tickets_migrated ({','.join(fields)}) "
+                    f"SELECT {','.join(fields)} FROM tickets"
+                )
+                db.execute("DROP TABLE tickets")
+                db.execute("ALTER TABLE tickets_migrated RENAME TO tickets")
             db.execute("CREATE INDEX IF NOT EXISTS tickets_scope ON tickets(tenant_id,owner_id)")
+            db.commit()
+            violations = db.execute("PRAGMA foreign_key_check").fetchall()
+            if violations:
+                raise sqlite3.IntegrityError("Ticket schema migration left invalid foreign keys.")
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
     @contextmanager
     def _connect(self):
@@ -94,14 +167,46 @@ class TicketStore:
         return account
 
     def create_ticket(self, *, actor, message: str, details: str,
-                      phone: str, result: TriageResult, request_id: str,
+                      phone: str, request_id: str,
+                      result: TriageResult | None = None,
+                      classification: ClassificationResult | None = None,
+                      decision: ReviewDecision | None = None,
                       direct_human: bool = False) -> str:
-        review = review_decision(result)
-        phone = normalize_phone(phone, required=True)
-        if not message.strip() or len(message) > 20000:
-            raise ValueError("The customer message must contain between 1 and 20,000 characters.")
-        if len(details) > 10000 or not request_id:
-            raise ValueError("Keep extra details under 10,000 characters and include a submission identifier.")
+        if result is not None:
+            classification = result.classification
+        if direct_human:
+            if decision is None:
+                decision = review_decision_from_classification(classification, explicit_human_request=True)
+            # A direct request is an explicit support action, not an AI classification result.
+            classification = None
+            result = None
+        elif decision is None:
+            decision = review_decision(result) if result is not None else review_decision_from_classification(classification)
+        if not decision.required:
+            raise ValueError("A support ticket requires a human-review decision.")
+        if not re.fullmatch(r"[0-9a-f]{32}", request_id or ""):
+            raise ValueError("The submission identifier is invalid.")
+        creation_reason = decision.creation_reason or "classifier_review"
+        if creation_reason not in CREATION_REASONS:
+            raise ValueError("Unknown support-ticket creation reason.")
+        category = classification.category if classification is not None else None
+        classifier_confidence = None
+        confidence = None
+        if classification is not None:
+            classifier_confidence = classification.model_confidence
+            if classifier_confidence is None and not decision.security:
+                classifier_confidence = classification.confidence
+            # The legacy confidence field is kept null for protected cases because
+            # its public score can include a safety-rule score rather than a model score.
+            confidence = None if decision.security else classification.confidence
+        suggested_reply = None
+        sources = None
+        ai_state = "not_required" if classification is None else "pending"
+        if result is not None:
+            ai_state = "complete"
+            if result.draft.grounded:
+                suggested_reply = result.draft.text
+                sources = json.dumps(result.draft.cited_sources)
         now = _now()
         with self._connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -113,6 +218,11 @@ class TicketStore:
                 if existing["tenant_id"] != actor.tenant_id or existing["owner_id"] != actor.user_id:
                     raise PermissionError("The submission identifier belongs to a different account.")
                 return existing["id"]
+            phone = normalize_phone(phone, required=True)
+            if not message.strip() or len(message) > 20000:
+                raise ValueError("The customer message must contain between 1 and 20,000 characters.")
+            if len(details) > 10000:
+                raise ValueError("Keep extra details under 10,000 characters.")
             ticket_id = "TKT-" + uuid4().hex[:12].upper()
             staff = db.execute("SELECT name,email FROM accounts WHERE tenant_id=? AND role='staff' ORDER BY CASE name WHEN 'Rahul' THEN 0 ELSE 1 END,name LIMIT 1",
                                (actor.tenant_id,)).fetchone()
@@ -121,16 +231,18 @@ class TicketStore:
                 INSERT INTO tickets
                 (id,request_id,message,details,customer_name,phone,category,confidence,
                  priority,review_reason,needs_human_review,suggested_reply,sources,tracking_hash,
-                 status,created_at,updated_at,tenant_id,owner_id,callback_requested,assigned_to)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                 status,created_at,updated_at,tenant_id,owner_id,callback_requested,assigned_to,
+                 classifier_confidence,creation_reason,ai_state)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """, (
                 ticket_id, request_id, message.strip(), details.strip(), account["name"], phone,
-                result.classification.category, result.classification.confidence,
-                "Urgent" if review.security else "Normal",
-                "Customer requested direct human support." if direct_human else review.reason,
-                1, result.draft.text if result.draft.grounded else "",
-                json.dumps(result.draft.cited_sources), "",
-                "Open", now, now, actor.tenant_id, actor.user_id, int(direct_human or review.required), assigned,
+                category, confidence,
+                "Urgent" if decision.security else "Normal",
+                decision.reason,
+                1, suggested_reply,
+                sources, "",
+                "Open", now, now, actor.tenant_id, actor.user_id, int(direct_human or decision.required), assigned,
+                classifier_confidence, creation_reason, ai_state,
             ))
             db.execute("INSERT INTO ticket_events(ticket_id,actor,status,occurred_at) VALUES (?,?,?,?)",
                        (ticket_id, "Customer", "Open", now))
@@ -144,15 +256,67 @@ class TicketStore:
                 enqueue_mail(db, tenant_id=actor.tenant_id, recipient=staff["email"], kind="staff_ticket",
                     subject=f"New support request {ticket_id}",
                     body=f"Ticket {ticket_id} is assigned to {staff['name']}.\nCustomer: {account['name']}\nCallback phone: {phone}\n"
-                         f"Category: {result.classification.category}\nHuman callback requested: {'Yes' if direct_human or review.required else 'No'}\n"
+                         f"Category: {category or 'Human support'}\nHuman callback requested: {'Yes' if direct_human or decision.required else 'No'}\n"
                          "Sign in to your organisation's support inbox to review the message and resolve the ticket.",
                     event_key=f"staff-ticket:{ticket_id}")
         return ticket_id
 
+    def ticket_id_for_request(self, actor, request_id: str) -> str | None:
+        """Resolve a durable submission ID only inside its authenticated owner scope."""
+        if not re.fullmatch(r"[0-9a-f]{32}", request_id or ""):
+            raise ValueError("The submission identifier is invalid.")
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._scope(db, actor)
+            row = db.execute("SELECT id,tenant_id,owner_id FROM tickets WHERE request_id=?", (request_id,)).fetchone()
+            if row is None:
+                return None
+            if row["tenant_id"] != actor.tenant_id or row["owner_id"] != actor.user_id:
+                raise PermissionError("The submission identifier belongs to a different account.")
+            return row["id"]
+
+    def update_ai_assistance(self, actor, ticket_id: str, *, result: TriageResult | None = None,
+                              failed: bool = False) -> None:
+        """Update optional model assistance without changing ticket ownership or priority."""
+        if (result is None) == (not failed):
+            raise ValueError("Provide either completed assistance or a failure state.")
+        with self._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            self._scope(db, actor)
+            row = db.execute("SELECT * FROM tickets WHERE id=? AND tenant_id=? AND owner_id=?",
+                             (ticket_id, actor.tenant_id, actor.user_id)).fetchone()
+            if row is None:
+                raise PermissionError("This ticket is not available to your account.")
+            if failed:
+                db.execute("UPDATE tickets SET ai_state='failed',updated_at=? WHERE id=? AND tenant_id=? AND owner_id=?",
+                           (_now(), ticket_id, actor.tenant_id, actor.user_id))
+                return
+            classification = result.classification
+            decision = review_decision(result)
+            reply = result.draft.text if result.draft.grounded else None
+            sources = json.dumps(result.draft.cited_sources) if result.draft.grounded else None
+            model_confidence = classification.model_confidence
+            if model_confidence is None and not decision.security:
+                model_confidence = classification.confidence
+            # Keep urgent priority and the original handoff reason once persisted.
+            db.execute("""
+                UPDATE tickets SET category=?, confidence=?, classifier_confidence=?,
+                    suggested_reply=?, sources=?, ai_state='complete', updated_at=?,
+                    priority=CASE WHEN priority='Urgent' THEN 'Urgent' ELSE ? END,
+                    needs_human_review=1
+                WHERE id=? AND tenant_id=? AND owner_id=?
+            """, (
+                classification.category,
+                None if decision.security else classification.confidence,
+                model_confidence, reply, sources, _now(),
+                "Urgent" if decision.security else row["priority"],
+                ticket_id, actor.tenant_id, actor.user_id,
+            ))
+
     def list_tickets(self, actor, status: str = "All") -> list[dict]:
         with self._connect() as db:
             account = self._scope(db, actor)
-            sql = "SELECT id,category,priority,status,assigned_to,created_at,version FROM tickets WHERE tenant_id=?"
+            sql = "SELECT id,COALESCE(category,'Human support') AS category,priority,status,assigned_to,created_at,version FROM tickets WHERE tenant_id=?"
             args = [actor.tenant_id]
             if account["role"] == "customer":
                 sql += " AND owner_id=?"
@@ -178,7 +342,7 @@ class TicketStore:
             ticket = dict(row)
             ticket.pop("tracking_hash")
             ticket.pop("request_id")
-            ticket["sources"] = json.loads(ticket["sources"])
+            ticket["sources"] = json.loads(ticket["sources"]) if ticket["sources"] else []
             return ticket
 
     def update_ticket(self, actor, ticket_id: str, *, status: str, assigned_to: str,

@@ -98,14 +98,18 @@ def classify_ticket(model: Pipeline, text: str) -> ClassificationResult:
             needs_human_review=True,
             review_reason="Security/Fraud is protected: safety signal or security probability crossed the escalation threshold.",
             safety=safety,
+            model_confidence=model_confidence,
+            review_reason_code="security_review",
         )
 
     review_reason = None
+    review_reason_code = None
     needs_review = False
 
     if model_confidence < LOW_CONFIDENCE_THRESHOLD:
         needs_review = True
         review_reason = f"Low classifier confidence ({model_confidence:.0%})."
+        review_reason_code = "low_confidence"
 
     # Even if another class wins, a non-trivial Security/Fraud probability cannot be silently ignored.
     if security_prob >= SECURITY_REVIEW_THRESHOLD:
@@ -113,10 +117,12 @@ def classify_ticket(model: Pipeline, text: str) -> ClassificationResult:
         review_reason = (
             f"Security/Fraud probability is {security_prob:.0%}, above the review floor; ticket requires human review."
         )
+        review_reason_code = "security_review"
 
     if safety.triggered:
         needs_review = True
         review_reason = "Security-adjacent language detected; ticket requires human review."
+        review_reason_code = "security_review"
 
     if re.search(
         r"\b(?:human|real person|support agent|support engineer|someone from support)\b|"
@@ -125,6 +131,7 @@ def classify_ticket(model: Pipeline, text: str) -> ClassificationResult:
     ):
         needs_review = True
         review_reason = "The customer requested a person or reported that the issue remains unresolved."
+        review_reason_code = "explicit_human"
 
     return ClassificationResult(
         category=model_category,
@@ -133,4 +140,6 @@ def classify_ticket(model: Pipeline, text: str) -> ClassificationResult:
         needs_human_review=needs_review,
         review_reason=review_reason,
         safety=safety,
+        model_confidence=model_confidence,
+        review_reason_code=review_reason_code,
     )
