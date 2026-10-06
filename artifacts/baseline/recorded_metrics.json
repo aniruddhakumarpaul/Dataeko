@@ -1,0 +1,262 @@
+{
+  "dataset_rows": 500,
+  "training_rows_after_label_conflict_quarantine": 499,
+  "quarantined_label_conflicts": 1,
+  "class_counts": {
+    "General Inquiry": 392,
+    "Billing": 43,
+    "Technical Issue": 32,
+    "Feature Request": 29,
+    "Security / Fraud": 4
+  },
+  "baseline": {
+    "accuracy": 0.944,
+    "macro_f1": 0.685363753766681,
+    "weighted_f1": 0.9342201176639402,
+    "security_recall_raw_model": 0.0,
+    "report": {
+      "Billing": {
+        "precision": 0.9166666666666666,
+        "recall": 1.0,
+        "f1-score": 0.9565217391304348,
+        "support": 11.0
+      },
+      "Feature Request": {
+        "precision": 1.0,
+        "recall": 0.7142857142857143,
+        "f1-score": 0.8333333333333334,
+        "support": 7.0
+      },
+      "General Inquiry": {
+        "precision": 0.9423076923076923,
+        "recall": 1.0,
+        "f1-score": 0.9702970297029703,
+        "support": 98.0
+      },
+      "Security / Fraud": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 1.0
+      },
+      "Technical Issue": {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1-score": 0.6666666666666666,
+        "support": 8.0
+      },
+      "accuracy": 0.944,
+      "macro avg": {
+        "precision": 0.7717948717948717,
+        "recall": 0.6428571428571429,
+        "f1-score": 0.685363753766681,
+        "support": 125.0
+      },
+      "weighted avg": {
+        "precision": 0.9394358974358974,
+        "recall": 0.944,
+        "f1-score": 0.9342201176639402,
+        "support": 125.0
+      }
+    }
+  },
+  "final_cost_sensitive": {
+    "accuracy": 0.952,
+    "macro_f1": 0.8793333333333333,
+    "weighted_f1": 0.9463199999999999,
+    "security_recall_raw_model": 1.0,
+    "report": {
+      "Billing": {
+        "precision": 0.8461538461538461,
+        "recall": 1.0,
+        "f1-score": 0.9166666666666666,
+        "support": 11.0
+      },
+      "Feature Request": {
+        "precision": 1.0,
+        "recall": 0.7142857142857143,
+        "f1-score": 0.8333333333333334,
+        "support": 7.0
+      },
+      "General Inquiry": {
+        "precision": 0.9607843137254902,
+        "recall": 1.0,
+        "f1-score": 0.98,
+        "support": 98.0
+      },
+      "Security / Fraud": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 1.0
+      },
+      "Technical Issue": {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1-score": 0.6666666666666666,
+        "support": 8.0
+      },
+      "accuracy": 0.952,
+      "macro avg": {
+        "precision": 0.9613876319758674,
+        "recall": 0.8428571428571429,
+        "f1-score": 0.8793333333333333,
+        "support": 125.0
+      },
+      "weighted avg": {
+        "precision": 0.9557164404223227,
+        "recall": 0.952,
+        "f1-score": 0.9463199999999999,
+        "support": 125.0
+      }
+    }
+  },
+  "safety_benchmark": {
+    "protected_cases": 15,
+    "protected_safe_handling_rate": 1.0,
+    "protected_silent_general_misroutes": 0,
+    "non_security_force_security_rate": 0.0,
+    "details": [
+      {
+        "ticket_id": "S001",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.6
+      },
+      {
+        "ticket_id": "S002",
+        "expected": "Security / Fraud",
+        "predicted": "General Inquiry",
+        "review": true,
+        "confidence": 0.3562081484704928
+      },
+      {
+        "ticket_id": "S003",
+        "expected": "Security / Fraud",
+        "predicted": "Technical Issue",
+        "review": true,
+        "confidence": 0.3857563261040236
+      },
+      {
+        "ticket_id": "S004",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.4504134353456458
+      },
+      {
+        "ticket_id": "S005",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.55
+      },
+      {
+        "ticket_id": "S006",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.55
+      },
+      {
+        "ticket_id": "S007",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.45
+      },
+      {
+        "ticket_id": "S008",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.55
+      },
+      {
+        "ticket_id": "S009",
+        "expected": "Security / Fraud",
+        "predicted": "General Inquiry",
+        "review": true,
+        "confidence": 0.43136295199496794
+      },
+      {
+        "ticket_id": "S010",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.55
+      },
+      {
+        "ticket_id": "S011",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.6
+      },
+      {
+        "ticket_id": "S012",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.55
+      },
+      {
+        "ticket_id": "S013",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.75
+      },
+      {
+        "ticket_id": "S014",
+        "expected": "Security / Fraud",
+        "predicted": "Billing",
+        "review": true,
+        "confidence": 0.2935938380493174
+      },
+      {
+        "ticket_id": "S015",
+        "expected": "Security / Fraud",
+        "predicted": "Security / Fraud",
+        "review": true,
+        "confidence": 0.7
+      },
+      {
+        "ticket_id": "N001",
+        "expected": "Technical Issue",
+        "predicted": "Technical Issue",
+        "review": true,
+        "confidence": 0.5866398417326499
+      },
+      {
+        "ticket_id": "N002",
+        "expected": "Billing",
+        "predicted": "Billing",
+        "review": false,
+        "confidence": 0.9188828967756266
+      },
+      {
+        "ticket_id": "N003",
+        "expected": "Feature Request",
+        "predicted": "Feature Request",
+        "review": true,
+        "confidence": 0.5717882896578327
+      },
+      {
+        "ticket_id": "N004",
+        "expected": "General Inquiry",
+        "predicted": "General Inquiry",
+        "review": false,
+        "confidence": 0.9640318310978394
+      },
+      {
+        "ticket_id": "N005",
+        "expected": "Technical Issue",
+        "predicted": "Technical Issue",
+        "review": true,
+        "confidence": 0.5452521171657433
+      }
+    ]
+  }
+}
