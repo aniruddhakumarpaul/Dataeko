@@ -9,12 +9,13 @@ A zero-cost support triage system that combines **imbalanced multi-class ticket 
 1. Classifies a pasted ticket into **General Inquiry, Billing, Technical Issue, Feature Request, or Security / Fraud** and displays a confidence score.
 2. Protects Security/Fraud with a high-recall safety gate and a conservative human-review threshold so a plausible security incident is not silently treated as General Inquiry.
 3. Retrieves relevant KB articles with hybrid lexical + semantic search.
-4. Drafts a response only from retrieved evidence and cites source IDs inline.
+4. Drafts a response for support staff only from retrieved evidence and cites source IDs inline.
 5. Abstains when retrieval is weak instead of fabricating an answer.
 
-The main screen focuses on the customer message, category, confidence, review action,
-and suggested reply. Help articles and technical details are optional expandable
-panels. See [`docs/ui.md`](docs/ui.md) for the user flow and exceptional states.
+The customer screen focuses on their message, category, confidence, ticket status,
+and the engineer's submitted response. Relevant help articles are optional. Draft
+replies and review instructions appear only in the staff inbox. See
+[`docs/ui.md`](docs/ui.md) for the user flow and exceptional states.
 
 ## Why this design
 

@@ -260,8 +260,9 @@ if result is not None:
     if review.security:
         st.warning(
             "**Security review needed**\n\n"
-            "This message may involve account access or payment misuse. "
-            "Ask a security specialist to review it before sending a reply."
+            + ("Your ticket has been raised for our support team to review this account or payment security concern."
+               if st.session_state.get("raised_ticket") else
+               "This may involve account or payment security. Request a support engineer to review your concern.")
         )
     elif review.required and result.draft.grounded:
         st.warning(
@@ -277,62 +278,15 @@ if result is not None:
         else:
             st.info("We couldn't find a relevant help article. Raise a support ticket to have an engineer review it.")
 
-    if result.draft.grounded:
-        with st.container(border=True):
-            st.subheader("Suggested reply")
-            st.markdown(result.draft.text)
-            st.caption("Review the wording before sending it to the customer.")
-            st.download_button(
-                "Save reply",
-                data=result.draft.text,
-                file_name="suggested-reply.txt",
-                mime="text/plain",
-                on_click="ignore",
-            )
-
     render_raise_ticket(store, mail, principal, result, review, st.session_state["analyzed_message"])
 
     if result.draft.grounded:
-        with st.expander("Help articles used"):
+        with st.expander("Help articles"):
             for hit in result.retrieval:
                 if hit.source_id not in result.draft.cited_sources:
                     continue
-                st.markdown(f"**{hit.title} [{hit.source_id}]**")
+                st.markdown(f"**{hit.title}**")
                 st.markdown(hit.text)
-
-    with st.expander("Technical details"):
-        st.caption("For evaluation and troubleshooting.")
-        st.write(f"Search method: {st.session_state['retrieval_backend']}")
-        st.write(f"Reply method: {result.draft.generation_mode}")
-        if c.review_reason:
-            st.write(c.review_reason)
-        st.write(f"Human attention required: {'Yes' if review.required else 'No'}")
-        if c.safety.reasons:
-            st.write("Detected signals: " + ", ".join(c.safety.reasons))
-        if result.draft.reason:
-            st.write(result.draft.reason)
-        st.dataframe(
-            pd.DataFrame(
-                sorted(c.probabilities.items(), key=lambda x: x[1], reverse=True),
-                columns=["Category", "Probability"],
-            ),
-            hide_index=True,
-            width="stretch",
-        )
-        st.dataframe(
-            pd.DataFrame([
-                {
-                    "Source": h.source_id,
-                    "Article": h.title,
-                    "Relevance": round(h.score, 3),
-                    "Lexical": round(h.lexical_score, 3),
-                    "Semantic": round(h.semantic_score, 3),
-                }
-                for h in result.retrieval
-            ]),
-            hide_index=True,
-            width="stretch",
-        )
 
     st.button("Start over", on_click=start_over)
 elif st.session_state.get("raised_ticket"):

@@ -195,6 +195,7 @@ def render_support_inbox(store, mail, principal, accounts):
         st.info('Direct human callback requested, preferably within 2 minutes. Confirm availability before promising a time.')
     if ticket['suggested_reply']:
         with st.expander('Suggested help article reply'):
+            st.caption('Review this draft before sending a response to the customer.')
             st.text(ticket['suggested_reply'])
     executives = [row['name'] for row in store.staff_members(principal)]
     version_key = f"{ticket_id}_{ticket['version']}"

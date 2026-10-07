@@ -158,3 +158,19 @@ existing EM-2026 account also signed into its inbox and support using a mailbox-
 OTP. Temporary browser-test data was removed; existing customer data was preserved.
 The support message now reads: "A support engineer will review it and resolve it
 at the earliest."
+
+## 2026-10-07: Keep generated replies in the staff interface
+
+The customer screen inherited an agent-oriented Suggested reply card and instructions
+to review wording before sending it to a customer. Remove that card, its download,
+and technical diagnostics from the customer page. Security notices now explain the
+customer's escalation status. Optional help articles remain collapsed and omit
+internal source IDs in their headings. The existing role-restricted staff inbox
+retains the generated draft with its review instruction. Customers continue to see
+only the response submitted by staff in their ticket receipt and My tickets.
+
+Verification: all 24 application UI regression tests passed, including hidden
+customer drafts, retained staff drafts, visible submitted resolutions, ticket
+persistence, and retry handling. The existing hacked-device request was checked
+in the browser: its security notice and ticket receipt were shown without the
+Suggested reply, Save reply, staff review instructions, or technical diagnostics.

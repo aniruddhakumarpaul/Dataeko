@@ -66,15 +66,43 @@ def test_empty_message_does_not_analyze(app):
     pipeline.run.assert_not_called()
 
 
-def test_reply_survives_rerun_and_details_are_optional(app):
+def test_customer_draft_is_hidden_on_rerun_but_saved_for_staff(app, backend):
     at, pipeline = app
     analyze(at)
     at.run()
-    assert any("Check the two charges" in item.value for item in at.markdown)
+    assert not any("Check the two charges" in item.value for item in at.markdown)
+    assert not any(item.value == 'Suggested reply' for item in at.subheader)
+    assert not at.get('download_button')
+    assert not any(expander.label == 'Technical details' for expander in at.expander)
+    assert not any('sending it to the customer' in caption.value for caption in at.caption)
+    ticket = backend.store.list_tickets(backend.people['alice'])[0]
+    assert backend.store.get_ticket(backend.people['rahul'],ticket['id'])['suggested_reply'] == 'Check the two charges. [KB-004]'
     assert all(not expander.proto.expanded for expander in at.expander)
     assert not at.sidebar.children
     pipeline.classify.assert_called_once_with("I was charged twice.")
     pipeline.complete.assert_called_once()
+
+
+def test_staff_can_review_draft_and_customer_only_sees_submitted_resolution(app, backend):
+    from conftest import session_for
+
+    customer, _ = app
+    analyze(customer)
+    staff = AppTest.from_file(str(ROOT/'app.py'),default_timeout=15)
+    staff.session_state['auth_session'] = session_for(backend,backend.people['rahul'])
+    staff.run()
+    assert not staff.exception
+    assert any(expander.label=='Suggested help article reply' for expander in staff.expander)
+    assert any(item.value=='Check the two charges. [KB-004]' for item in staff.text)
+    assert any('Review this draft' in caption.value for caption in staff.caption)
+    ticket_id = backend.store.list_tickets(backend.people['alice'])[0]['id']
+    ticket = backend.store.get_ticket(backend.people['rahul'],ticket_id)
+    backend.store.update_ticket(backend.people['rahul'],ticket_id,status='Resolved',assigned_to='Rahul',
+        resolution='Support has reviewed and resolved your request.',expected_version=ticket['version'])
+    customer.run()
+    assert any(item.value=='Support has reviewed and resolved your request.' for item in customer.text)
+    assert not any('Check the two charges' in item.value for item in customer.markdown)
+    assert not any(expander.label=='Suggested help article reply' for expander in customer.expander)
 
 
 def test_no_answer_requests_manual_handling_without_suggested_reply(app):
@@ -97,7 +125,8 @@ def test_security_review_explains_next_action(app):
     )
     analyze(at, "My account was hacked.")
     assert "Security review needed" in at.warning[0].value
-    assert "security specialist" in at.warning[0].value
+    assert "Your ticket has been raised for our support team" in at.warning[0].value
+    assert 'before sending a reply' not in at.warning[0].value
 
 
 def test_security_abstention_keeps_review_and_no_answer_explanations(app):
@@ -140,7 +169,7 @@ def test_analysis_failure_preserves_ticket_and_retry_reuses_it(app, backend):
     )
     analyze(at)
     assert not at.error
-    assert any(item.value == "Suggested reply" for item in at.subheader)
+    assert not any(item.value == "Suggested reply" for item in at.subheader)
     assert len(backend.store.list_tickets(backend.people["alice"])) == 1
 
 
