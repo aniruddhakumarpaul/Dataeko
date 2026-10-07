@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from email.message import EmailMessage
-import json
 import os
 from pathlib import Path
 import smtplib
@@ -38,6 +37,7 @@ class MailService:
                     expires_at REAL, last_error TEXT NOT NULL DEFAULT '', claimed_at REAL
                 );
             """)
+            db.execute('BEGIN IMMEDIATE')
             columns = {row["name"] for row in db.execute("PRAGMA table_info(mail_outbox)")}
             if "claimed_at" not in columns:
                 db.execute("ALTER TABLE mail_outbox ADD COLUMN claimed_at REAL")
@@ -62,10 +62,9 @@ class MailService:
 
     def _send(self, row: dict) -> None:
         if self.mode == "demo":
-            directory = self.root / "var" / "demo-mail"
-            directory.mkdir(parents=True, exist_ok=True)
-            (directory / f"{row['id']}.json").write_text(json.dumps({key: row[key] for key in (
-                "id", "recipient", "subject", "body", "created_at", "expires_at")}, indent=2), encoding="utf-8")
+            from .mailboxes import MailboxService
+            if not MailboxService(self.store).receive(row['recipient'], row['subject'], row['body'], tenant_id=row['tenant_id']):
+                raise ValueError('The local recipient inbox has not been provisioned for this tenant.')
             return
         self.require_ready()
         email = EmailMessage()
@@ -112,8 +111,8 @@ class MailService:
                     db.execute("UPDATE mail_outbox SET status='Failed',last_error=? WHERE id=?", (type(error).__name__, row["id"]))
             else:
                 with self.store._connect() as db:
-                    db.execute("UPDATE mail_outbox SET status='Sent',last_error='',body=CASE WHEN kind='otp' AND ?='smtp' THEN '' ELSE body END WHERE id=?",
-                               (self.mode, row["id"]))
+                    db.execute("UPDATE mail_outbox SET status='Sent',last_error='',body=CASE WHEN kind='otp' THEN '' ELSE body END WHERE id=?",
+                               (row["id"],))
 
     def event_status(self, event_key: str) -> str:
         with self.store._connect() as db:

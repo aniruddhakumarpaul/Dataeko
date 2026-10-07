@@ -38,6 +38,12 @@ This receives local SMTP only. Employee/mailbox access details are generated und
 ignored `var/` files; demo executives are fictional and no real call is placed.
 For internet email, configure a sender you control in the ignored secrets file.
 
+After **Create account and send code**, customers sign into the local demo mailbox
+with the same email and password they entered in that form. Read the latest code in
+the inbox, return to support, and verify it. The OTP page survives refresh and offers
+resend and delivery retry. Existing local customer inboxes use their current support
+password; fictional staff retain their assigned inbox credentials.
+
 Use **Python 3.12** for the tested development environment. The Windows launcher
 creates `.venv`, installs locked dependencies (including pytest), trains the classifier,
 evaluates retrieval, runs tests, and launches the app:

@@ -81,6 +81,7 @@ class AccountService:
                     identity TEXT PRIMARY KEY, count INTEGER NOT NULL, since REAL NOT NULL
                 );
             """)
+            db.execute('BEGIN IMMEDIATE')
             columns = {row["name"] for row in db.execute("PRAGMA table_info(accounts)")}
             if "employee_id" not in columns:
                 db.execute("ALTER TABLE accounts ADD COLUMN employee_id TEXT NOT NULL DEFAULT ''")
@@ -94,6 +95,9 @@ class AccountService:
             challenge_columns = {row["name"] for row in db.execute("PRAGMA table_info(login_challenges)")}
             if "pending_password" not in challenge_columns:
                 db.execute("ALTER TABLE login_challenges ADD COLUMN pending_password TEXT")
+        if self.mail.is_demo:
+            from .mailboxes import MailboxService
+            MailboxService(self.store).use_customer_credentials()
 
     def create_tenant(self, name: str, join_code: str) -> str:
         code = join_code.strip().upper()
@@ -146,79 +150,94 @@ class AccountService:
                      "Verify the email code to finish registration.\nDataeko support",event_key=f"invite:{employee_id}")
 
     def register_customer(self, *, employee_id: str, name: str, phone: str,
-                          email: str, password: str, demo_access: dict | None = None) -> str:
+                          email: str, password: str) -> str:
         self.mail.require_ready()
         employee_id, phone, email = employee_id.strip().upper(), normalize_phone(phone, True), validate_email(email)
         pending_hash = password_hash(password, demo=self.mail.is_demo)
+        # Account, inbox, challenge, and outbox are one transaction. SMTP runs after commit.
         with self.store._connect() as db:
+            db.execute("BEGIN IMMEDIATE")
             invite = db.execute("SELECT * FROM employee_invites WHERE employee_id=?", (employee_id,)).fetchone()
             existing = db.execute("SELECT * FROM accounts WHERE employee_id=?", (employee_id,)).fetchone()
-        if not invite and self.mail.is_demo:
-            user_id = self._create_test_account(employee_id,name,phone,email,demo_access)
-            return self._registration_challenge(user_id,pending_hash)
-        if not invite or invite["email"] != email or invite["phone"] != phone:
-            if self.mail.is_demo and re.fullmatch(r"EM-[0-9]{4}",employee_id):
-                raise ValueError("This Employee ID is already in use. Choose another ID or sign in.")
-            raise ValueError("Check the Employee ID, phone, and email assigned by your support team.")
-        if invite["claimed_by"] or (existing and (existing["verified"] or existing["role"] != "customer")):
-            raise ValueError("This Employee ID is already registered. Please sign in.")
-        user_id = existing["id"] if existing else self.provision_account(tenant_id=invite["tenant_id"], name=invite["name"], phone=phone,
-            email=email, password=secrets.token_urlsafe(32), employee_id=employee_id)
-        if self.mail.is_demo:
-            from .mailboxes import MailboxService
-            new_password = MailboxService(self.store).provision(invite["tenant_id"],email)
-            if new_password and demo_access is not None:
-                demo_access.update(email=email,password=new_password)
-        return self._registration_challenge(user_id, pending_hash)
+            if not invite and self.mail.is_demo:
+                if not re.fullmatch(r"EM-[0-9]{4}", employee_id):
+                    raise ValueError("Use an Employee ID like EM-2026: EM- followed by four digits.")
+                if not name.strip() or len(name) > 100:
+                    raise ValueError("Enter your name (up to 100 characters).")
+                tenant = db.execute("SELECT id FROM tenants WHERE join_code='DATAEKO-DEMO'").fetchone()
+                tenant_id = tenant['id'] if tenant else uuid4().hex
+                if not tenant:
+                    db.execute("INSERT INTO tenants VALUES (?, 'Dataeko demo', 'DATAEKO-DEMO')", (tenant_id,))
+                if existing:
+                    raise ValueError("This Employee ID is already in use. Choose another ID or sign in.")
+                if db.execute("SELECT id FROM accounts WHERE tenant_id=? AND (phone=? OR email=?)", (tenant_id,phone,email)).fetchone():
+                    raise ValueError("This phone or email already has a test account. Sign in or use different details.")
+                if db.execute("SELECT id FROM mailboxes WHERE email=?", (email,)).fetchone():
+                    raise ValueError("This email already has a demo inbox. Use its assigned Employee ID.")
+                user_id = uuid4().hex
+                db.execute("""INSERT INTO accounts(id,tenant_id,name,phone,email,password_hash,role,demo,employee_id)
+                    VALUES (?,?,?,?,?,?,'customer',1,?)""", (user_id,tenant_id,name.strip(),phone,email,pending_hash,employee_id))
+                db.execute("INSERT INTO employee_invites(employee_id,tenant_id,name,email,phone) VALUES (?,?,?,?,?)",
+                           (employee_id,tenant_id,name.strip(),email,phone))
+            else:
+                if not invite or invite['email'] != email or invite['phone'] != phone:
+                    if self.mail.is_demo and re.fullmatch(r"EM-[0-9]{4}", employee_id):
+                        raise ValueError("This Employee ID is already in use. Choose another ID or sign in.")
+                    raise ValueError("Check the Employee ID, phone, and email assigned by your support team.")
+                if invite['claimed_by'] or (existing and (existing['verified'] or existing['role'] != 'customer')):
+                    raise ValueError("This Employee ID is already registered. Please sign in.")
+                tenant_id = invite['tenant_id']
+                user_id = existing['id'] if existing else uuid4().hex
+                if self.mail.is_demo and existing:
+                    previous = db.execute("""SELECT pending_password FROM login_challenges
+                        WHERE user_id=? AND pending_password IS NOT NULL ORDER BY expires_at DESC LIMIT 1""", (user_id,)).fetchone()
+                    original = previous['pending_password'] if previous else existing['password_hash']
+                    if not check_password(password, original):
+                        raise ValueError("This account is awaiting verification. Use the password you chose when creating it.")
+                if not existing:
+                    db.execute("""INSERT INTO accounts(id,tenant_id,name,phone,email,password_hash,role,demo,employee_id)
+                        VALUES (?,?,?,?,?,?,'customer',?,?)""", (user_id,tenant_id,invite['name'],phone,email,pending_hash,int(self.mail.is_demo),employee_id))
+            if self.mail.is_demo:
+                inbox = db.execute("SELECT id,tenant_id FROM mailboxes WHERE email=?", (email,)).fetchone()
+                if inbox and inbox['tenant_id'] != tenant_id:
+                    raise ValueError("This demo email address belongs to a different tenant.")
+                if inbox:
+                    db.execute("UPDATE mailboxes SET auth_source='support',password_hash=? WHERE id=?", (pending_hash,inbox['id']))
+                    db.execute("DELETE FROM mailbox_sessions WHERE mailbox_id=?", (inbox['id'],))
+                else:
+                    db.execute("INSERT INTO mailboxes(id,tenant_id,email,password_hash,auth_source) VALUES (?,?,?,?,'support')",
+                               (uuid4().hex,tenant_id,email,pending_hash))
+                db.execute("UPDATE accounts SET password_hash=? WHERE id=?", (pending_hash,user_id))
+            cid = self._issue_challenge(db, user_id, pending_hash)
+        self.mail.deliver_pending(event_key=f"otp:{cid}")
+        return cid
 
-    def _create_test_account(self, employee_id: str, name: str, phone: str, email: str, demo_access: dict | None) -> str:
-        if not re.fullmatch(r"EM-[0-9]{4}",employee_id):
-            raise ValueError("Use an Employee ID like EM-2026: EM- followed by four digits.")
-        if not name.strip() or len(name) > 100:
-            raise ValueError("Enter your name (up to 100 characters).")
-        from .mailboxes import MailboxService
-        MailboxService(self.store)
-        tenant_id = self.create_tenant("Dataeko demo","DATAEKO-DEMO")
-        user_id, mailbox_password = uuid4().hex,secrets.token_urlsafe(24)
-        placeholder = password_hash(secrets.token_urlsafe(24),demo=True)
-        mailbox_hash = password_hash(mailbox_password,demo=True)
-        created_mailbox = False
-        with self.store._connect() as db:
-            db.execute("BEGIN IMMEDIATE")
-            if db.execute("SELECT id FROM accounts WHERE employee_id=?",(employee_id,)).fetchone():
-                raise ValueError("This Employee ID is already in use. Choose another ID or sign in.")
-            if db.execute("SELECT id FROM accounts WHERE tenant_id=? AND (phone=? OR email=?)",(tenant_id,phone,email)).fetchone():
-                raise ValueError("This phone or email already has a test account. Sign in or use different details.")
-            mailbox = db.execute("SELECT tenant_id FROM mailboxes WHERE email=?",(email,)).fetchone()
-            if mailbox and mailbox["tenant_id"] != tenant_id:
-                raise ValueError("This email is already in use by another test organisation. Use a different email.")
-            db.execute("""INSERT INTO accounts(id,tenant_id,name,phone,email,password_hash,role,demo,employee_id)
-                VALUES (?,?,?,?,?,?,'customer',1,?)""",(user_id,tenant_id,name.strip(),phone,email,placeholder,employee_id))
-            db.execute("INSERT INTO employee_invites(employee_id,tenant_id,name,email,phone) VALUES (?,?,?,?,?)",
-                       (employee_id,tenant_id,name.strip(),email,phone))
-            if not mailbox:
-                db.execute("INSERT INTO mailboxes VALUES (?,?,?,?)",(uuid4().hex,tenant_id,email,mailbox_hash))
-                created_mailbox = True
-        if created_mailbox and demo_access is not None:
-            demo_access.update(email=email,password=mailbox_password)
-        return user_id
-
-    def _registration_challenge(self, user_id: str, pending_hash: str) -> str:
+    def _issue_challenge(self, db, user_id: str, pending_hash: str | None = None) -> str:
         now, cid, otp = time.time(), uuid4().hex, f"{secrets.randbelow(1000000):06d}"
+        user = db.execute("SELECT * FROM accounts WHERE id=?", (user_id,)).fetchone()
+        if not user or (pending_hash and user['verified']):
+            raise ValueError("Please sign in to this existing account.")
+        recent = db.execute("SELECT expires_at FROM login_challenges WHERE user_id=? ORDER BY expires_at DESC LIMIT 1", (user_id,)).fetchone()
+        if recent and recent['expires_at'] - 300 > now - 30:
+            raise ValueError("A code was just sent. Wait 30 seconds before requesting another.")
+        db.execute("UPDATE mail_outbox SET status='Expired',body='' WHERE event_key IN (SELECT 'otp:'||id FROM login_challenges WHERE user_id=?)", (user_id,))
+        db.execute("UPDATE login_challenges SET used=1,pending_password=NULL WHERE user_id=?", (user_id,))
+        db.execute("INSERT INTO login_challenges(id,user_id,otp_hash,expires_at,pending_password) VALUES (?,?,?,?,?)",
+                   (cid,user_id,hashlib.sha256((cid+otp).encode()).hexdigest(),now+300,pending_hash))
+        subject = "Verify your Dataeko employee account" if pending_hash else "Your support sign-in code"
+        enqueue_mail(db,tenant_id=user['tenant_id'],recipient=user['email'],kind='otp',subject=subject,
+            body=f"Your one-time {'account verification' if pending_hash else 'support sign-in'} code is {otp}.\n"
+                 "It expires in 5 minutes. Do not share it.",event_key=f"otp:{cid}",expires_at=now+300)
+        return cid
+
+    def resend_challenge(self, challenge_id: str) -> str:
+        self.mail.require_ready()
         with self.store._connect() as db:
-            db.execute("BEGIN IMMEDIATE")
-            user = db.execute("SELECT * FROM accounts WHERE id=? AND verified=0", (user_id,)).fetchone()
-            if not user:
-                raise ValueError("Please sign in to this existing account.")
-            recent = db.execute("SELECT expires_at FROM login_challenges WHERE user_id=? ORDER BY expires_at DESC LIMIT 1", (user_id,)).fetchone()
-            if recent and recent["expires_at"] - 300 > now - 30:
-                raise ValueError("A code was just sent. Wait 30 seconds before requesting another.")
-            db.execute("UPDATE mail_outbox SET status='Expired',body='' WHERE event_key IN (SELECT 'otp:'||id FROM login_challenges WHERE user_id=?)", (user_id,))
-            db.execute("UPDATE login_challenges SET used=1 WHERE user_id=?", (user_id,))
-            db.execute("INSERT INTO login_challenges(id,user_id,otp_hash,expires_at,pending_password) VALUES (?,?,?,?,?)",
-                       (cid,user_id,hashlib.sha256((cid+otp).encode()).hexdigest(),now+300,pending_hash))
-            enqueue_mail(db,tenant_id=user["tenant_id"],recipient=user["email"],kind="otp",subject="Verify your Dataeko employee account",
-                body=f"Your one-time account verification code is {otp}.\nIt expires in 5 minutes. Do not share it.",event_key=f"otp:{cid}",expires_at=now+300)
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute("SELECT * FROM login_challenges WHERE id=?", (challenge_id,)).fetchone()
+            if not row or row['used'] or row['attempts'] >= 5 or row['expires_at'] <= time.time()-600:
+                raise ValueError("This verification request has ended. Return to sign-in or create account.")
+            cid = self._issue_challenge(db, row['user_id'], row['pending_password'])
         self.mail.deliver_pending(event_key=f"otp:{cid}")
         return cid
 
@@ -227,7 +246,7 @@ class AccountService:
         phone = normalize_phone(phone, True)
         identity = hashlib.sha256(employee_id.strip().upper().encode()).hexdigest()
         now = time.time()
-        challenge_id, otp = uuid4().hex, f"{secrets.randbelow(1000000):06d}"
+        challenge_id = ""
         failure = False
         with self.store._connect() as db:
             db.execute("BEGIN IMMEDIATE")
@@ -235,7 +254,7 @@ class AccountService:
             if attempts and now - attempts["since"] < 900 and attempts["count"] >= 5:
                 raise ValueError("Too many sign-in attempts. Please wait 15 minutes and try again.")
             row = db.execute("SELECT * FROM accounts WHERE employee_id=? AND phone=?", (employee_id.strip().upper(), phone)).fetchone()
-            valid = row is not None and check_password(password, row["password_hash"])
+            valid = row is not None and check_password(password, row['password_hash']) and (row['verified'] or row['role'] == 'staff')
             if not valid:
                 if row is None:
                     # Spend the same KDF work for unknown identities.
@@ -245,20 +264,8 @@ class AccountService:
                 db.execute("INSERT OR REPLACE INTO auth_attempts VALUES (?,?,?)", (identity, count, since))
                 failure = True
             else:
-                recent = db.execute("SELECT expires_at FROM login_challenges WHERE user_id=? ORDER BY expires_at DESC LIMIT 1",
-                                    (row["id"],)).fetchone()
-                if recent and recent["expires_at"] - 300 > now - 30:
-                    raise ValueError("A code was just sent. Please wait 30 seconds before requesting another.")
                 db.execute("DELETE FROM auth_attempts WHERE identity=?", (identity,))
-                db.execute("""UPDATE mail_outbox SET status='Expired',body='' WHERE kind='otp'
-                    AND event_key IN (SELECT 'otp:'||id FROM login_challenges WHERE user_id=?)""", (row["id"],))
-                db.execute("UPDATE login_challenges SET used=1 WHERE user_id=?", (row["id"],))
-                db.execute("INSERT INTO login_challenges(id,user_id,otp_hash,expires_at) VALUES (?,?,?,?)",
-                           (challenge_id, row["id"], hashlib.sha256((challenge_id + otp).encode()).hexdigest(), now + 300))
-                enqueue_mail(db, tenant_id=row["tenant_id"], recipient=row["email"], kind="otp",
-                             subject="Your support sign-in code",
-                             body=f"Your one-time support sign-in code is {otp}.\nIt expires in 5 minutes. Do not share it.\nIf you did not request it, ignore this email.",
-                             event_key=f"otp:{challenge_id}", expires_at=now + 300)
+                challenge_id = self._issue_challenge(db, row['id'])
         if failure:
             raise ValueError("The Employee ID, phone number, or password is incorrect.")
         self.mail.deliver_pending(event_key=f"otp:{challenge_id}")
@@ -306,3 +313,8 @@ class AccountService:
     def active_challenge(self, challenge: str) -> bool:
         with self.store._connect() as db:
             return db.execute("SELECT id FROM login_challenges WHERE id=? AND used=0 AND attempts<5 AND expires_at>?", (challenge,time.time())).fetchone() is not None
+
+    def recoverable_challenge(self, challenge: str) -> bool:
+        with self.store._connect() as db:
+            return db.execute("SELECT id FROM login_challenges WHERE id=? AND used=0 AND attempts<5 AND expires_at>?",
+                              (challenge,time.time()-600)).fetchone() is not None

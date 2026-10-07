@@ -282,7 +282,7 @@ after the database commit, and expose retry/recovery if saving fails.
 
 Keep the customer's chosen abstention copy:
 
-> A support engineer will review it and prepare a response.
+> A support engineer will review it and resolve it at the earliest.
 
 Show the ticket number/status and the direct-human action beside it. Category and
 confidence remain available for the exercise, with technical diagnostics collapsed.

@@ -124,3 +124,37 @@ new incident with identical text. Ticket schema migration preserves existing tic
 and events, makes unavailable classification/draft fields nullable, and records raw
 classifier confidence and ticket creation reason separately. SMTP remains an
 after-commit outbox operation and cannot change ticket-creation success.
+
+## 2026-10-07: Repair demo mailbox onboarding
+
+The user explicitly requested that Create account provision the demo inbox with
+the same email and password entered in the form. This replaces the earlier separate,
+one-time generated password for local customers. The inbox resolves the customer's
+salted support-password hash, while the support login rejects unverified accounts.
+Fictional staff inbox credentials stay independent. Existing local customer inboxes
+are migrated without plaintext passwords; earlier inbox sessions are revoked.
+
+Signup now commits account, invitation, inbox, OTP challenge, and outbox atomically.
+A pending demo registration cannot replace its password through a retry. A resend
+keeps the pending password, rotates and invalidates codes, and enforces the existing
+cooldown and attempt cap. The OTP URL survives refresh and mailbox round trips.
+Demo-mode delivery uses the actual inbox store rather than a disconnected JSON mail
+directory. Successful delivery removes OTP bodies from the outbox. The inbox marks
+the latest email, preserves tenant/recipient isolation, and uses redirects after
+failed sign-in so refresh stays valid. HTTP checks the local Host and Origin plus
+CSRF; SMTP rejects unknown recipients before accepting message data.
+
+Browser acceptance must authenticate the mailbox and read the email there. Direct
+database OTP extraction is not evidence that the user flow works. Since the customer
+demo shares one password, this is a local verification simulation; external SMTP
+verification retains its separate internet-email flow.
+
+Verification: the complete 118-test suite passed, followed by 21 final focused
+checks covering onboarding, concurrent schema migration, HTTP/SMTP isolation,
+staff invitations, and the updated support message. Browser verification created
+a temporary customer, signed into the inbox with the signup credentials, read the
+OTP there, tested refresh and resend, and completed support verification. The
+existing EM-2026 account also signed into its inbox and support using a mailbox-read
+OTP. Temporary browser-test data was removed; existing customer data was preserved.
+The support message now reads: "A support engineer will review it and resolve it
+at the earliest."

@@ -8,6 +8,7 @@ import pytest
 
 from triage.accounts import AccountService, Principal
 from triage.mail import MailService
+from triage.mailboxes import MailboxService
 from triage.tickets import TicketStore
 
 
@@ -50,12 +51,16 @@ def backend(tmp_path):
         with store._connect() as db:
             db.execute("UPDATE accounts SET verified=1 WHERE id=?", (user_id,))
         people[name.lower()] = Principal(user_id, tenant, role, name, phone, f"{name.lower()}@example.test", "Team A" if tenant == a else "Team B", f"EMP-{name.upper()}")
+        MailboxService(store).provision(tenant, f'{name.lower()}@example.test', PASSWORD)
     return SimpleNamespace(store=store, mail=mail, accounts=accounts, people=people, root=tmp_path)
 
 
 def otp_for(backend, challenge):
     with backend.store._connect() as db:
-        body = db.execute("SELECT body FROM mail_outbox WHERE event_key=?", (f"otp:{challenge}",)).fetchone()["body"]
+        body = db.execute("""SELECT r.body FROM received_mail r JOIN mailboxes m ON m.id=r.mailbox_id
+            JOIN accounts a ON a.email=m.email AND a.tenant_id=m.tenant_id
+            JOIN login_challenges c ON c.user_id=a.id WHERE c.id=?
+            ORDER BY r.received_at DESC LIMIT 1""", (challenge,)).fetchone()['body']
     return re.search(r"code is (\d{6})", body).group(1)
 
 

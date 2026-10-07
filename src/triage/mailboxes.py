@@ -1,4 +1,4 @@
-"""Private local demo mailboxes with independent credentials and tenant boundaries."""
+"""Private demo inboxes with scoped sessions and shared customer credentials."""
 from dataclasses import dataclass
 import hashlib
 import secrets
@@ -36,6 +36,32 @@ class MailboxService:
                 );
                 CREATE TABLE IF NOT EXISTS mailbox_csrf (token_hash TEXT PRIMARY KEY, expires_at REAL NOT NULL);
             """)
+            db.execute('BEGIN IMMEDIATE')
+            columns = {row['name'] for row in db.execute('PRAGMA table_info(mailboxes)')}
+            if 'auth_source' not in columns:
+                db.execute("ALTER TABLE mailboxes ADD COLUMN auth_source TEXT NOT NULL DEFAULT 'independent'")
+
+    def use_customer_credentials(self) -> None:
+        """Migrate local customer inboxes to the support credential, without plaintext secrets."""
+        with self.store._connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            rows = db.execute("""SELECT a.*, m.id AS mailbox_id FROM accounts a
+                JOIN mailboxes m ON m.tenant_id=a.tenant_id AND m.email=a.email
+                WHERE a.role='customer' AND m.auth_source='independent'""").fetchall()
+            for row in rows:
+                if not row['verified']:
+                    pending = db.execute("""SELECT pending_password FROM login_challenges
+                        WHERE user_id=? AND pending_password IS NOT NULL
+                        ORDER BY expires_at DESC LIMIT 1""", (row['id'],)).fetchone()
+                    if not pending:
+                        continue
+                    db.execute('UPDATE accounts SET password_hash=? WHERE id=?', (pending['pending_password'],row['id']))
+                db.execute("UPDATE mailboxes SET auth_source='support' WHERE id=?", (row['mailbox_id'],))
+                db.execute('DELETE FROM mailbox_sessions WHERE mailbox_id=?', (row['mailbox_id'],))
+
+    def recipient_exists(self, email: str) -> bool:
+        with self.store._connect() as db:
+            return db.execute('SELECT id FROM mailboxes WHERE email=?', (email.strip().lower(),)).fetchone() is not None
 
     def provision(self, tenant_id: str, email: str, password: str | None = None) -> str | None:
         email = validate_email(email)
@@ -46,7 +72,7 @@ class MailboxService:
                     raise ValueError("This demo email address belongs to a different tenant.")
                 return None
             password = password or secrets.token_urlsafe(24)
-            db.execute("INSERT INTO mailboxes VALUES (?,?,?,?)", (uuid4().hex,tenant_id,email,password_hash(password,demo=True)))
+            db.execute("INSERT INTO mailboxes(id,tenant_id,email,password_hash) VALUES (?,?,?,?)", (uuid4().hex,tenant_id,email,password_hash(password,demo=True)))
             return password
 
     def sign_in(self, email: str, password: str) -> str:
@@ -59,7 +85,12 @@ class MailboxService:
             if attempts and now - attempts["since"] < 900 and attempts["count"] >= 5:
                 raise ValueError("Too many attempts. Wait 15 minutes before trying again.")
             row = db.execute("SELECT * FROM mailboxes WHERE email=?", (email,)).fetchone()
-            valid = row is not None and check_password(password, row["password_hash"])
+            credential = row['password_hash'] if row else ''
+            if row and row['auth_source'] == 'support':
+                account = db.execute("SELECT password_hash FROM accounts WHERE tenant_id=? AND email=? AND role='customer'",
+                                     (row['tenant_id'],email)).fetchone()
+                credential = account['password_hash'] if account else ''
+            valid = row is not None and check_password(password, credential)
             if not valid:
                 if row is None:
                     hashlib.pbkdf2_hmac("sha256",password[:128].encode(),b"unknown-mailbox",600000)
@@ -100,10 +131,10 @@ class MailboxService:
             return db.execute("SELECT 1 FROM mailbox_csrf WHERE token_hash=? AND expires_at>?",
                               (hashlib.sha256(cookie.encode()).hexdigest(),time.time())).fetchone() is not None
 
-    def receive(self, recipient: str, subject: str, body: str) -> bool:
+    def receive(self, recipient: str, subject: str, body: str, *, tenant_id: str | None = None) -> bool:
         with self.store._connect() as db:
             row = db.execute("SELECT id,tenant_id FROM mailboxes WHERE email=?", (recipient.lower().strip(),)).fetchone()
-            if not row:
+            if not row or (tenant_id is not None and row['tenant_id'] != tenant_id):
                 return False
             db.execute("INSERT INTO received_mail VALUES (?,?,?,?,?,?)", (uuid4().hex,row["id"],row["tenant_id"],subject[:500],body[:100000],time.time()))
         return True

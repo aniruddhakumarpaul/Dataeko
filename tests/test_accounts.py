@@ -133,12 +133,10 @@ def test_missing_email_configuration_cannot_bypass_otp(backend, monkeypatch):
 
 def test_demo_custom_employee_registration_creates_private_inbox_without_invite(backend):
     from triage.mailboxes import MailboxService
-    access = {}
     c = backend.accounts.register_customer(employee_id="em-2026",name="Test customer",
-        phone="+12025550122",email="custom@example.test",password="1",demo_access=access)
-    assert access["email"] == "custom@example.test" and access["password"]
+        phone="+12025550122",email="custom@example.test",password="1")
     boxes = MailboxService(backend.store)
-    assert boxes.resolve_session(boxes.sign_in(access["email"],access["password"]))
+    assert boxes.resolve_session(boxes.sign_in('custom@example.test','1'))
     token = backend.accounts.verify_otp(c,otp_for(backend,c))
     person = backend.accounts.resolve_session(token)
     assert person.employee_id == "EM-2026" and person.role == "customer"
@@ -153,9 +151,8 @@ def test_demo_custom_id_format_is_em_plus_four_digits(backend,employee_id):
 
 
 def test_custom_id_cannot_overwrite_existing_account(backend):
-    access = {}
     c = backend.accounts.register_customer(employee_id="EM-2026",name="Test customer",
-        phone="+12025550122",email="custom@example.test",password="1",demo_access=access)
+        phone="+12025550122",email="custom@example.test",password="1")
     with pytest.raises(ValueError,match="already in use"):
         backend.accounts.register_customer(employee_id="EM-2026",name="Different customer",
             phone="+12025550123",email="different@example.test",password="2")

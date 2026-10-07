@@ -138,20 +138,20 @@ def render_support_inbox(store, mail, principal, accounts):
             except (ValueError,PermissionError) as error:
                 st.error(str(error))
             else:
+                if mail.is_demo:
+                    from .mailboxes import MailboxService
+                    temporary = MailboxService(store).provision(principal.tenant_id,employee_email)
+                    if temporary:
+                        st.session_state['new_mailbox_credentials'] = {'email':employee_email,'password':temporary}
                 try:
                     mail.deliver_pending(event_key='invite:'+employee_id.strip().upper())
                 except Exception:
                     logging.exception('Employee invitation saved; email must be retried')
                 st.success('Employee ID assigned. The employee must verify their assigned email to activate the account.')
-                if mail.mode == 'demo' or mail.setting('host') in {'127.0.0.1','localhost'}:
-                    from .mailboxes import MailboxService
-                    temporary = MailboxService(store).provision(principal.tenant_id,employee_email)
-                    if temporary:
-                        st.session_state['new_mailbox_credentials'] = {'email':employee_email,'password':temporary}
     new_mailbox = st.session_state.get('new_mailbox_credentials')
     if new_mailbox:
         with st.expander('New employee demo mailbox access',expanded=True):
-            st.caption('Give these details to the invited employee privately. This password is separate from their support password.')
+            st.caption('These temporary details open the invitation before signup. After Create account, the customer inbox uses their chosen support email and password.')
             st.text_input('Demo mailbox email',value=new_mailbox['email'],disabled=True)
             st.text_input('Temporary demo mailbox password',value=new_mailbox['password'],type='password',disabled=True)
             st.download_button('Save mailbox access details',data=f"Email: {new_mailbox['email']}\nMailbox password: {new_mailbox['password']}\n",

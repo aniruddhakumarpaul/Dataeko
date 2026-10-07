@@ -4,6 +4,7 @@ import time
 import pytest
 
 from triage.mailboxes import MailboxService
+from triage.accounts import password_hash
 
 
 @pytest.fixture
@@ -11,7 +12,8 @@ def boxes(backend):
     service = MailboxService(backend.store)
     for name in ("alice", "bob", "eve"):
         person = backend.people[name]
-        service.provision(person.tenant_id,person.email,"separate-mail-password-123")
+        with backend.store._connect() as db:
+            db.execute('UPDATE mailboxes SET password_hash=? WHERE email=?', (password_hash('separate-mail-password-123',demo=True),person.email))
         service.receive(person.email,"Private email",f"Only for {name}")
     return service
 

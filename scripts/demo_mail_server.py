@@ -1,6 +1,7 @@
 """Loopback-only SMTP and private tenant email inbox for local development."""
 from email import policy
 from email.parser import BytesParser
+from datetime import datetime, timezone
 import html
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -17,27 +18,37 @@ from triage.mail import MailService
 from triage.accounts import AccountService
 from triage.mailboxes import MailboxService
 
-store = TicketStore(os.getenv('SUPPORT_DB_PATH', str(ROOT / 'var' / 'support.sqlite3')))
-mail_service = MailService(store, ROOT)
-AccountService(store, mail_service)
-mailboxes = MailboxService(store)
-
-
 def continuation(path):
     value = parse_qs(urlparse(path).query).get('continue', [''])[0]
     return value if len(value)==32 and all(c in '0123456789abcdef' for c in value) else ''
 
 
 class Mailbox:
+    def __init__(self, mailboxes):
+        self.mailboxes = mailboxes
+
+    async def handle_RCPT(self, server, session, envelope, address, rcpt_options):
+        if not self.mailboxes.recipient_exists(address):
+            return '550 This local demo mailbox is not provisioned'
+        envelope.rcpt_tos.append(address)
+        return '250 Recipient accepted'
+
     async def handle_DATA(self, server, session, envelope):
         mail = BytesParser(policy=policy.default).parsebytes(envelope.content)
         body = mail.get_body(preferencelist=('plain',))
         text = body.get_content() if body else ''
-        accepted = [mailboxes.receive(recipient, str(mail['Subject'] or ''), text) for recipient in envelope.rcpt_tos]
+        accepted = [self.mailboxes.receive(recipient, str(mail['Subject'] or ''), text) for recipient in envelope.rcpt_tos]
         return '250 Stored in the private demo mailbox' if all(accepted) else '550 This local demo mailbox is not provisioned'
 
 
 class Viewer(BaseHTTPRequestHandler):
+    def allowed_origins(self):
+        port = self.server.server_address[1]
+        return {f'http://127.0.0.1:{port}', f'http://localhost:{port}'}
+
+    def valid_host(self):
+        return 'http://'+self.headers.get('Host', '') in self.allowed_origins()
+
     def cookies(self):
         parsed = SimpleCookie()
         try:
@@ -59,20 +70,27 @@ class Viewer(BaseHTTPRequestHandler):
 
     def page(self, error=''):
         code = continuation(self.path)
+        errors = {'credentials': 'The email address or password is incorrect.',
+                  'locked': 'Too many attempts. Wait 15 minutes before trying again.'}
+        error = error or errors.get(parse_qs(urlparse(self.path).query).get('error', [''])[0], '')
         back = 'http://127.0.0.1:8501/' + ('?auth_challenge='+quote(code) if code else '')
         path = '/?continue='+quote(code) if code else '/'
-        principal = mailboxes.resolve_session(self.cookies().get('mailbox_session',''))
-        csrf = mailboxes.csrf_token()
+        principal = self.mailboxes.resolve_session(self.cookies().get('mailbox_session',''))
+        csrf = self.cookies().get('mailbox_csrf', '')
+        if not self.mailboxes.valid_csrf(csrf, csrf):
+            csrf = self.mailboxes.csrf_token()
         entries = []
         if principal:
-            for item in mailboxes.messages(principal):
-                entries.append(f"<article><h2>{html.escape(item['subject'])}</h2><pre>{html.escape(item['body'])}</pre></article>")
+            for index, item in enumerate(self.mailboxes.messages(principal)):
+                received = datetime.fromtimestamp(item['received_at'], timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+                latest = 'Latest email · ' if index == 0 else ''
+                entries.append(f"<article><h2>{html.escape(item['subject'])}</h2><p>{latest}{received}</p><pre>{html.escape(item['body'])}</pre></article>")
             content = f"<p>Signed in as <strong>{html.escape(principal.email)}</strong></p>" + ''.join(entries)
             if not entries:
                 content += '<article><h2>No emails yet</h2><p>Return to support and request an email code, then refresh this inbox.</p></article>'
             content += f"<form action='/logout' method='post'><input type='hidden' name='csrf' value='{csrf}'><input type='hidden' name='continue' value='{code}'><button>Sign out</button></form>"
         else:
-            content = f"""<article><h2>Sign in to your inbox</h2><p>Use your assigned email and separate mailbox password.</p>
+            content = f"""<article><h2>Sign in to your inbox</h2><p>Customers: use the same email and password entered in Create account. Staff: use your assigned inbox login.</p>
             <form action='/login' method='post'><input type='hidden' name='csrf' value='{csrf}'>
             <input type='hidden' name='continue' value='{code}'>
             <label>Email address<input name='email' type='email' autocomplete='username' required maxlength='254'></label>
@@ -93,13 +111,24 @@ class Viewer(BaseHTTPRequestHandler):
         self.reply(page,cookies=(f'mailbox_csrf={csrf}; HttpOnly; SameSite=Strict; Path=/',))
 
     def do_GET(self):
+        if not self.valid_host():
+            self.reply('Request host rejected.', status=403)
+            return
         if urlparse(self.path).path != '/':
             self.reply('Not found',status=404)
             return
         self.page()
 
+    def redirect(self, code, *, cookie='', error=''):
+        self.send_response(303)
+        self.send_header('Location', '/?continue='+quote(code)+('&error='+quote(error) if error else ''))
+        self.send_header('Cache-Control', 'no-store')
+        if cookie:
+            self.send_header('Set-Cookie', cookie)
+        self.end_headers()
+
     def do_POST(self):
-        if self.headers.get('Origin') not in {'http://127.0.0.1:8025','http://localhost:8025'}:
+        if not self.valid_host() or self.headers.get('Origin') not in self.allowed_origins():
             self.reply('Request origin rejected.',status=403)
             return
         try:
@@ -112,7 +141,7 @@ class Viewer(BaseHTTPRequestHandler):
             return
         data = parse_qs(self.rfile.read(length).decode('utf-8',errors='replace'))
         cookies = self.cookies()
-        if not mailboxes.valid_csrf(cookies.get('mailbox_csrf',''),data.get('csrf',[''])[0]):
+        if not self.mailboxes.valid_csrf(cookies.get('mailbox_csrf',''),data.get('csrf',[''])[0]):
             self.reply('Please refresh and try again.',status=403)
             return
         code = data.get('continue',[''])[0]
@@ -120,32 +149,33 @@ class Viewer(BaseHTTPRequestHandler):
         cookie = ''
         if self.path == '/login':
             try:
-                token = mailboxes.sign_in(data.get('email',[''])[0],data.get('password',[''])[0])
+                token = self.mailboxes.sign_in(data.get('email',[''])[0],data.get('password',[''])[0])
             except ValueError as error:
-                self.path = '/?continue='+code
-                self.page(str(error))
+                self.redirect(code, error='locked' if 'Too many attempts' in str(error) else 'credentials')
                 return
             cookie = f'mailbox_session={token}; HttpOnly; SameSite=Strict; Path=/'
         elif self.path == '/logout':
-            mailboxes.logout(cookies.get('mailbox_session',''))
+            self.mailboxes.logout(cookies.get('mailbox_session',''))
             cookie = 'mailbox_session=; Max-Age=0; HttpOnly; SameSite=Strict; Path=/'
         else:
             self.reply('Not found',status=404)
             return
-        self.send_response(303)
-        self.send_header('Location','/?continue='+code)
-        self.send_header('Set-Cookie',cookie)
-        self.end_headers()
+        self.redirect(code, cookie=cookie)
 
     def log_message(self,*args):
         pass
 
 
 if __name__ == '__main__':
-    controller = Controller(Mailbox(),hostname='127.0.0.1',port=1025,data_size_limit=200000)
+    store = TicketStore(os.getenv('SUPPORT_DB_PATH', str(ROOT / 'var' / 'support.sqlite3')))
+    mail_service = MailService(store, ROOT)
+    AccountService(store, mail_service)
+    mailboxes = MailboxService(store)
+    viewer = type('ConfiguredViewer', (Viewer,), {'mailboxes': mailboxes})
+    controller = Controller(Mailbox(mailboxes),hostname='127.0.0.1',port=1025,data_size_limit=200000)
     controller.start()
     print('Local SMTP: 127.0.0.1:1025; private demo inbox: http://127.0.0.1:8025',flush=True)
     try:
-        ThreadingHTTPServer(('127.0.0.1',8025),Viewer).serve_forever()
+        ThreadingHTTPServer(('127.0.0.1',8025),viewer).serve_forever()
     finally:
         controller.stop()

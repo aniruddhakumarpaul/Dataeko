@@ -94,9 +94,8 @@ if principal is not None:
         st.session_state["auth_cookie_saved"] = True
 if principal is None:
     continuation = st.query_params.get("auth_challenge", "")
-    if (mail.mode == "demo" or mail.setting("host") in {"127.0.0.1", "localhost"}) and continuation and accounts.active_challenge(continuation):
+    if mail.is_demo and continuation and accounts.recoverable_challenge(continuation):
         st.session_state["pending_challenge"] = continuation
-        st.query_params.clear()
     render_authentication(accounts, mail)
     st.stop()
 
@@ -109,6 +108,9 @@ def sign_out():
 
 st.caption(f"{principal.tenant_name} · {principal.name} · {principal.employee_id}")
 st.button("Sign out", on_click=sign_out)
+if mail.is_demo:
+    st.markdown('[Open your Dataeko demo inbox](http://127.0.0.1:8025/)')
+    st.caption('Customers use their support email and password for this local inbox. Staff use their assigned inbox login.')
 if principal.role == "staff":
     render_support_inbox(store, mail, principal, accounts)
     st.stop()
@@ -271,7 +273,7 @@ if result is not None:
 
     if not result.draft.grounded and result.draft.generation_mode != "human-request":
         if st.session_state.get("raised_ticket"):
-            st.info("A support engineer will review it and prepare a response.")
+            st.info("A support engineer will review it and resolve it at the earliest.")
         else:
             st.info("We couldn't find a relevant help article. Raise a support ticket to have an engineer review it.")
 

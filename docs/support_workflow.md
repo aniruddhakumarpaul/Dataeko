@@ -4,8 +4,12 @@ Support staff issue an Employee ID tied to a tenant, email, and phone number.
 For local testing, customers can instead choose an unused ID in the `EM-2026`
 format (EM- followed by four digits) and enter their own name, phone, email, and
 password without an invitation. These accounts join the Dataeko demo tenant as
-customers only. Their private demo inbox is created automatically and its separate
-login is shown at the OTP step. Existing accounts and inboxes are not overwritten.
+customers only. Their private demo inbox is created in the same transaction as the
+account, OTP challenge, and email outbox entry. It uses the same email and password
+entered in Create account, including before OTP verification. Support access remains
+blocked until verification. Passwords are never displayed or downloaded. Verified
+accounts cannot be replaced through Create account. An unverified demo registration
+retry must use its original password and cannot change inbox access.
 The assigned-contact registration described below applies outside testing.
 The ID identifies a person; a shared organisation code is used only by local
 operators to select a tenant. Registration matches the assigned email and phone.
@@ -72,22 +76,43 @@ This is not a public mailbox or internet email delivery.
 - Support app: http://127.0.0.1:8501
 - Private demo mailbox: http://127.0.0.1:8025 (loopback SMTP on port 1025).
 - `var/demo-employee-invitation.json`: initial Employee ID, assigned email/phone,
-  and a separate mailbox password. Create account and choose a support password.
+  and bootstrap inbox access before signup. After Create account, the inbox uses
+  the chosen support password.
 - `var/demo-staff-credentials.json`: staff Employee IDs, support passwords, and
   separate mailbox passwords. Staff also verify their email OTP.
 - `.streamlit/secrets.toml`: ignored SMTP configuration.
 - `var/support.sqlite3`: ignored accounts, tickets, notifications, and received email.
 
-The demo mailbox requires an independent email/password login. It shows only that
+Customers log into the demo mailbox with their support email and password. Fictional
+staff retain their separately assigned inbox credentials. It shows only that
 recipient's messages in the associated tenant, never a global mailbox listing.
 It provides Back to support, Refresh inbox, and Sign out. A short-lived challenge
 continuation restores the local OTP step when returning; it never grants an
 account session without a valid OTP and is disabled for internet SMTP settings.
-Mailbox cookies are HttpOnly and SameSite=Strict; forms check CSRF tokens and the
-local origin. Plain HTTP is restricted to the loopback development service.
+Mailbox cookies are HttpOnly and SameSite=Strict; forms check CSRF tokens, the
+local origin, and the Host header. Failed login redirects to a refreshable inbox URL.
+Plain HTTP is restricted to the loopback development service.
+
+The OTP step keeps only an opaque challenge ID in the URL so refresh and Back to
+support restore the step. Resend rotates the challenge, invalidates earlier codes,
+preserves the pending password, and enforces a 30-second cooldown. Expired requests
+remain recoverable for ten minutes after code expiry; used, attempt-locked, and older
+requests require starting again. Delivery failures leave the committed account and
+inbox available and can be retried without re-registration. The latest email is
+labeled. Successful delivery clears the OTP body from the outbox; the inbox retains
+the delivered message.
+
+Both `MAIL_MODE=demo` and loopback SMTP deliver to the private mailbox. The former
+no longer writes a separate filesystem mail store while claiming inbox delivery.
+Missing inboxes and tenant mismatches fail delivery; SMTP rejects unknown recipients
+at RCPT time. Local startup migrates existing customer inboxes to the current support
+password and revokes sessions using the old independent credential. Existing staff
+credentials, tickets, and messages are preserved.
 
 Staff can assign Employee IDs and create local mailbox access from Invite employee.
-Give temporary demo mailbox details to the employee privately. Local operators may
+Give temporary demo mailbox details to the employee privately for reading the
+invitation before signup. After customer registration, the chosen support password
+is also their inbox password. Local operators may
 also run `scripts/manage_employee.py` with tenant code, Employee ID, name, phone,
 and email. For real SMTP use `.streamlit/secrets.example.toml` and a sender you
 control. Port 587 uses STARTTLS; 465 uses direct TLS. Plaintext is permitted only
@@ -107,12 +132,20 @@ In the local demo, any non-empty password is accepted without a length or comple
 policy for support and mailbox accounts. Non-demo support registration keeps the
 12-to-128-character policy. Hashing, OTP checks, and tenant isolation still apply.
 
+Because a local customer uses one credential for both screens, demo email OTP is
+a workflow simulation, not an independent authentication factor or proof of owning
+the internet address. Non-demo SMTP registration and external email verification
+retain their existing flow. Administrative access to the local database can read
+delivered emails; normal signup and browser verification must read codes through the
+authenticated mailbox rather than database queries.
+
 OTP verification values and session tokens are hashed in storage. Codes expire after five minutes,
 allow five attempts, and are consumed atomically; passwords chosen at registration
 remain pending until email verification. Login failures persist across sessions.
 Support and mailbox sessions last eight hours. Support login survives browser refresh
 through an eight-hour SameSite=Strict cookie and is revoked on sign-out. The cookie
-uses the Secure flag over HTTPS. Mailbox login is independent and remains separate.
+uses the Secure flag over HTTPS. Mailbox sessions remain separate from support
+sessions, even when local customer credentials are shared.
 
 The hashing parameters were checked against the
 [OWASP password storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).

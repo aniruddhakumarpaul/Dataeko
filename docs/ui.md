@@ -54,6 +54,9 @@ from extractive replies; the real support action is adjacent to the guidance.
 The mailbox has email/password login, recipient/tenant filtering, Back to support,
 Refresh inbox, and Sign out. Authentication and technical details are separate from
 the primary customer flow. Demo identities and email transport are clearly labeled.
+Local customer signup uses the same email and password for the inbox. The OTP step
+survives refresh and offers resend and delivery retry; earlier codes are invalidated
+after resend. A permanent inbox link remains available after support sign-in.
 
 Streamlit 1.65 or newer is required for the UI's supported width APIs, matching the
 tested lock file. AppTest covers empty input, persisted results, manual handling,

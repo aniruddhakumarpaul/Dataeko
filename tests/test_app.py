@@ -83,7 +83,7 @@ def test_no_answer_requests_manual_handling_without_suggested_reply(app):
         classification=classification, retrieval=[], draft=sample_result(category="General Inquiry", grounded=False).draft
     )
     analyze(at, "What is the cafeteria menu?")
-    assert at.info[0].value == "A support engineer will review it and prepare a response."
+    assert at.info[0].value == "A support engineer will review it and resolve it at the earliest."
     assert "support engineer" in at.info[0].value
     assert not any(item.value == "Suggested reply" for item in at.subheader)
     assert not any("Automatic routing allowed" in item.value for item in at.success)
@@ -108,7 +108,7 @@ def test_security_abstention_keeps_review_and_no_answer_explanations(app):
     )
     analyze(at, "My account was hacked and I need help.")
     assert "Security review needed" in at.warning[0].value
-    assert at.info[0].value == "A support engineer will review it and prepare a response."
+    assert at.info[0].value == "A support engineer will review it and resolve it at the earliest."
 
 
 def test_selecting_example_clears_previous_result(app):

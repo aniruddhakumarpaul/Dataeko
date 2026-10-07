@@ -6,6 +6,16 @@ The support workflow and presentation states are documented in [ui.md](ui.md).
 Accounts, Employee IDs, support tickets, and email delivery are documented in
 [support_workflow.md](support_workflow.md).
 
+Local customer signup commits account, private inbox, OTP challenge, and outbox
+together. The inbox resolves the same hashed customer credential used by support
+and displays the verification email before support access is activated. Support
+session issuance still requires a valid OTP. The local demo simulates verification
+rather than providing a second authentication factor. SMTP delivery happens after
+commit and is retryable. Demo-mode delivery uses the same inbox store, eliminating
+the earlier separate filesystem mail store. Inbox sessions remain recipient and
+tenant scoped. Fictional staff inbox credentials remain independent. See the
+workflow document for retry, refresh, and migration rules.
+
 ```mermaid
 flowchart LR
     A[Customer submission] --> O[Authenticated tenant and owner]
